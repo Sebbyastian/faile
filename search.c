@@ -59,7 +59,7 @@ void order_moves (move_s moves[], long int move_ordering[], int num_moves,
       target = moves[i].target;
       promoted = moves[i].promoted;
       captured = moves[i].captured;
-      
+
       /* give captures precedence in move ordering, and order captures by
 	 material gain */
       if (captured != npiece)
@@ -122,7 +122,7 @@ void order_moves (move_s moves[], long int move_ordering[], int num_moves,
       }
 
       /* heuristics other than pv */
-      
+
       /* add the history heuristic bonus: */
       move_ordering[i] += (history_h[from][target]>>i_depth);
 
@@ -142,7 +142,7 @@ void order_moves (move_s moves[], long int move_ordering[], int num_moves,
 }
 
 
-void perft (int depth) {
+void perft (int depth, int white_to_move) {
 
   move_s moves[MOVE_BUFF];
   int num_moves, i, ep_temp;
@@ -157,22 +157,22 @@ void perft (int depth) {
   }
 
   /* generate the move list: */
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
 
   /* loop through the moves at the current depth: */
   for (i = 0; i < num_moves; i++) {
-    make (&moves[0], i);
+    make (&moves[0], i, &white_to_move);
 
     /* check to see if our move is legal: */
-    if (check_legal (&moves[0], i)) {
+    if (check_legal (&moves[0], i, white_to_move)) {
       raw_nodes++;
       /* go deeper into the tree recursively, increasing the indent to
 	 create the "tree" effect: */
-      perft (depth-1);
+      perft (depth-1, white_to_move);
     }
 
     /* unmake the move to go onto the next: */
-    unmake (&moves[0], i);
+    unmake (&moves[0], i, &white_to_move);
     cur_pos = temp_hash;
     ep_square = ep_temp;
   }
@@ -180,7 +180,7 @@ void perft (int depth) {
 }
 
 
-long int qsearch (int alpha, int beta, int depth) {
+long int qsearch (int alpha, int beta, int depth, int white_to_move) {
 
   /* perform a quiscense search on the current node using alpha-beta with
      negamax search */
@@ -214,29 +214,29 @@ long int qsearch (int alpha, int beta, int depth) {
   no_moves = TRUE;
 
   /* generate and order moves: */
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
   order_moves (&moves[0], &move_ordering[0], num_moves, &dummy);
 
   /* loop through the moves at the current node: */
   while (remove_one (&i, &move_ordering[0], num_moves)) {
 
-    make (&moves[0], i);
+    make (&moves[0], i, &white_to_move);
     assert (cur_pos.x1 == compute_hash ().x1 &&
 	    cur_pos.x2 == compute_hash ().x2);
     ply++;
     legal_move = FALSE;
 
     /* go deeper if it's a legal move: */
-    if (check_legal (&moves[0], i)) {
+    if (check_legal (&moves[0], i, white_to_move)) {
       nodes++;
       qnodes++;
-      score = -qsearch (-beta, -alpha, depth-1);
+      score = -qsearch (-beta, -alpha, depth-1, white_to_move);
       no_moves = FALSE;
       legal_move = TRUE;
     }
 
     ply--;
-    unmake (&moves[0], i);
+    unmake (&moves[0], i, &white_to_move);
     ep_square = ep_temp;
     cur_pos = temp_hash;
 
@@ -245,7 +245,7 @@ long int qsearch (int alpha, int beta, int depth) {
 
       /* don't update the history heuristic scores here, since depth is messed
 	 up when qsearch is called */
-      
+
       /* try for an early cutoff: */
       if (score >= beta) {
 	u_killers (moves[i], score);
@@ -303,7 +303,7 @@ bool remove_one (int *marker, long int move_ordering[], int num_moves) {
 }
 
 
-long int search (int alpha, int beta, int depth, bool do_null) {
+long int search (int alpha, int beta, int depth, bool do_null, int white_to_move) {
 
   /* search the current node using alpha-beta with negamax search */
 
@@ -372,7 +372,7 @@ long int search (int alpha, int beta, int depth, bool do_null) {
   i_alpha = alpha;
 
   /* perform check extensions if we haven't gone past maxdepth: */
-  if (in_check ()) {
+  if (in_check (white_to_move)) {
     if (ply < maxdepth+1) extensions++;
   }
   /* if not in check, look into null moves: */
@@ -395,13 +395,11 @@ long int search (int alpha, int beta, int depth, bool do_null) {
       xor (&cur_pos, ep_h_values[ep_square]);
       xor (&cur_pos, ep_h_values[0]);
 
-      white_to_move ^= 1;
       ply++;
       ep_square = 0;
-      null_score = -search (-beta, -beta+1, depth-null_red-1, FALSE);
+      null_score = -search (-beta, -beta+1, depth-null_red-1, FALSE, white_to_move ^ 1);
       ep_square = ep_temp;
       ply--;
-      white_to_move ^= 1;
 
       game_ply--;
       fifty--;
@@ -420,7 +418,7 @@ long int search (int alpha, int beta, int depth, bool do_null) {
       /* check to see if we can get a quick cutoff from our null move: */
       if (null_score >= beta)
 	return beta;
-      
+
       if (null_score < -INF+10*maxdepth)
 	extensions++;
     }
@@ -429,7 +427,7 @@ long int search (int alpha, int beta, int depth, bool do_null) {
   /* try to find a stable position before passing the position to eval (): */
   if (!(depth+extensions)) {
     captures = TRUE;
-    score = qsearch (alpha, beta, maxdepth);
+    score = qsearch (alpha, beta, maxdepth, white_to_move);
     captures = FALSE;
     return score;
   }
@@ -438,28 +436,28 @@ long int search (int alpha, int beta, int depth, bool do_null) {
   no_moves = TRUE;
 
   /* generate and order moves: */
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
   order_moves (&moves[0], &move_ordering[0], num_moves, &h_move);
 
   /* loop through the moves at the current node: */
   while (remove_one (&i, &move_ordering[0], num_moves)) {
 
-    make (&moves[0], i);
+    make (&moves[0], i, &white_to_move);
     assert (cur_pos.x1 == compute_hash ().x1 &&
 	    cur_pos.x2 == compute_hash ().x2);
     ply++;
     legal_move = FALSE;
 
     /* go deeper if it's a legal move: */
-    if (check_legal (&moves[0], i)) {
+    if (check_legal (&moves[0], i, white_to_move)) {
       nodes++;
-      score = -search (-beta, -alpha, depth-1+extensions, TRUE);
+      score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move);
       no_moves = FALSE;
       legal_move = TRUE;
     }
 
     ply--;
-    unmake (&moves[0], i);
+    unmake (&moves[0], i, &white_to_move);
     ep_square = ep_temp;
     cur_pos = temp_hash;
 
@@ -468,7 +466,7 @@ long int search (int alpha, int beta, int depth, bool do_null) {
 
     /* check our current score vs. alpha: */
     if (score > alpha && legal_move) {
-      
+
       /* update the history heuristic since we have a cutoff: */
       history_h[moves[i].from][moves[i].target] += depth;
 
@@ -491,7 +489,7 @@ long int search (int alpha, int beta, int depth, bool do_null) {
 
   /* check for mate / stalemate: */
   if (no_moves) {
-    if (in_check ()) {
+    if (in_check (white_to_move)) {
       alpha = -INF+ply;
     }
     else {
@@ -516,7 +514,7 @@ long int search (int alpha, int beta, int depth, bool do_null) {
 }
 
 
-move_s search_root (int alpha, int beta, int depth) {
+move_s search_root (int alpha, int beta, int depth, int white_to_move) {
 
   /* search the root node using alpha-beta with negamax search */
 
@@ -543,34 +541,34 @@ move_s search_root (int alpha, int beta, int depth) {
   time_failure = FALSE;
   start_piece_count = piece_count;
   bad_root_score = FALSE;
-  
+
   pv_length[ply] = ply;
   ep_temp = ep_square;
   temp_hash = cur_pos;
-  
+
   /* don't use hashing for returning moves from the root, but at least
      use it for some move ordering: */
   chk_hash (alpha, beta, depth, &h_type, &h_move);
 
   /* check extensions: */
-  if (in_check ()) extensions++;
+  if (in_check (white_to_move)) extensions++;
 
   /* generate and order moves: */
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
   order_moves (&moves[0], &move_ordering[0], num_moves, &h_move);
 
   /* loop through the moves at the root: */
   while (remove_one (&i, &move_ordering[0], num_moves)) {
-    make (&moves[0], i);
+    make (&moves[0], i, &white_to_move);
     assert (cur_pos.x1 == compute_hash ().x1 &&
 	    cur_pos.x2 == compute_hash ().x2);
     ply++;
     legal_move = FALSE;
 
     /* go deeper if it's a legal move: */
-    if (check_legal (&moves[0], i)) {
+    if (check_legal (&moves[0], i, white_to_move)) {
       nodes++;
-      root_score = -search (-beta, -alpha, depth-1+extensions, TRUE);
+      root_score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move);
 
       /* check to see if we've aborted this search before we found a move: */
       if (time_exit && no_moves)
@@ -581,7 +579,7 @@ move_s search_root (int alpha, int beta, int depth) {
     }
 
     ply--;
-    unmake (&moves[0], i);
+    unmake (&moves[0], i, &white_to_move);
     ep_square = ep_temp;
     cur_pos = temp_hash;
 
@@ -608,7 +606,7 @@ move_s search_root (int alpha, int beta, int depth) {
 
       /* update the hash tables: */
       store_hash (i_alpha, depth, alpha, exact, best_move);
-      
+
       /* update the pv: */
       pv[ply][ply] = moves[i];
       for (j = ply+1; j < pv_length[ply+1]; j++)
@@ -625,7 +623,7 @@ move_s search_root (int alpha, int beta, int depth) {
 
   /* check to see if we are mated / stalemated: */
   if (no_moves) {
-    if (in_check ()) {
+    if (in_check (white_to_move)) {
       if (white_to_move == 1) {
 	result = white_is_mated;
       }
@@ -662,16 +660,16 @@ move_s search_root (int alpha, int beta, int depth) {
 }
 
 
-move_s think (void) {
+move_s think (const int white_to_move) {
 
   /* Perform iterative deepening to go further in the search */
-  
+
   move_s comp_move, temp_move;
   int ep_temp, i, j;
   long int elapsed;
 
   /* see if we can get a book move: */
-  comp_move = book_move ();
+  comp_move = book_move (white_to_move);
   if (is_valid_comp (comp_move)) {
     /* print out a pv line indicating a book move: */
     printf ("0 0 0 0 (Book move)\n");
@@ -710,7 +708,7 @@ move_s think (void) {
       break;
 
     ep_temp = ep_square;
-    temp_move = search_root (-INF, INF, i_depth);
+    temp_move = search_root (-INF, INF, i_depth, white_to_move);
     ep_square = ep_temp;
 
     /* if we haven't aborted our search on time, set the computer's move
@@ -725,7 +723,7 @@ move_s think (void) {
       if (pv_length[1] <= 2 && i_depth > 1 && abs (cur_score) < (INF-100) &&
 	  result != stalemate && result != draw_by_fifty &&
 	  result != draw_by_rep)
-	hash_to_pv (i_depth);
+	hash_to_pv (i_depth, white_to_move);
       if (post && i_depth >= mindepth)
 	post_thinking (cur_score);
     }
@@ -751,7 +749,7 @@ move_s think (void) {
 }
 
 
-void tree (int depth, int indent, FILE *output, char *disp_b) {
+void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move) {
 
   move_s moves[MOVE_BUFF];
   int num_moves, i, j, ep_temp;
@@ -766,14 +764,14 @@ void tree (int depth, int indent, FILE *output, char *disp_b) {
   }
 
   /* generate the move list: */
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
 
   /* loop through the moves at the current depth: */
   for (i = 0; i < num_moves; i++) {
-    make (&moves[0], i);
+    make (&moves[0], i, &white_to_move);
 
     /* check to see if our move is legal: */
-    if (check_legal (&moves[0], i)) {
+    if (check_legal (&moves[0], i, white_to_move)) {
       /* indent and print out our line: */
       for (j = 0; j < indent; j++) {
 	fputc (' ', output);
@@ -787,15 +785,14 @@ void tree (int depth, int indent, FILE *output, char *disp_b) {
 
       /* go deeper into the tree recursively, increasing the indent to
 	 create the "tree" effect: */
-      tree (depth-1, indent+2, output, disp_b);
+      tree (depth-1, indent+2, output, disp_b, white_to_move);
     }
 
     /* unmake the move to go onto the next: */
-    unmake(&moves[0], i);
+    unmake(&moves[0], i, &white_to_move);
     cur_pos = temp_hash;
     ep_square = ep_temp;
   }
-
 }
 
 

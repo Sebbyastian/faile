@@ -38,7 +38,7 @@ SOFTWARE.
 char divider[50] = "-------------------------------------------------";
 move_s dummy = {0,0,0,0,0,0,0};
 
-int board[144], moved[144], ep_square, white_to_move, wking_loc,
+int board[144], moved[144], ep_square, wking_loc,
   bking_loc, white_castled, black_castled, result, ply, pv_length[PV_BUFF],
   history_h[144][144], pieces[33], squares[144], num_pieces, i_depth, fifty,
   fifty_move[PV_BUFF], game_ply;
@@ -73,18 +73,19 @@ int main (int argc, char *argv[]) {
   bool force_mode, show_board;
   double nps, elapsed;
   clock_t cpu_start = 0, cpu_end = 0;
+  int white_to_move;
 
-  parse_cmdline (argc, argv);
+  parse_cmdline (argc, argv, &white_to_move);
   start_up ();
   init_hash_values ();
   init_hash_tables ();
-  init_game ();
+  init_game (&white_to_move);
   init_book ();
   xb_mode = FALSE;
   force_mode = FALSE;
   comp_color = 0;
   show_board = TRUE;
-  
+
   setbuf (stdout, NULL);
   setbuf (stdin, NULL);
 
@@ -99,7 +100,7 @@ int main (int argc, char *argv[]) {
 
       start_time = rtime ();
       cpu_start = clock ();
-      comp_move = think ();
+      comp_move = think (white_to_move);
       cpu_end = clock ();
 
       /* check for a game end: */
@@ -107,10 +108,10 @@ int main (int argc, char *argv[]) {
 	  (comp_color == 0 && result != black_is_mated)) &&
 	  result != stalemate && result != draw_by_fifty &&
 	  result != draw_by_rep) {
-	
+
 	comp_to_coord (comp_move, output);
 
-	make (&comp_move, 0);
+	make (&comp_move, 0, &white_to_move);
 
 	/* check to see if we draw by rep/fifty after our move: */
 	if (is_draw ()) {
@@ -195,7 +196,7 @@ int main (int argc, char *argv[]) {
     if (is_valid_comp (pgn_to_comp (input, white_to_move))) {
       /* good SAN input style move */
       move = pgn_to_comp (input, white_to_move);
-      make (&move, 0);
+      make (&move, 0, &white_to_move);
       reset_piece_square ();
       if (show_board) {
 	printf ("\n");
@@ -204,8 +205,8 @@ int main (int argc, char *argv[]) {
     }
     else if (is_move (&input[0])) {
       /* good coordinate style input move */
-      if (verify_coord (input, &move)) {
-	make (&move, 0);
+      if (verify_coord (input, &move, white_to_move)) {
+	make (&move, 0, &white_to_move);
 	reset_piece_square ();
 	if (show_board) {
 	  printf ("\n");
@@ -231,11 +232,11 @@ int main (int argc, char *argv[]) {
       else if (!strncmp (input, "perft", 5)) {
 	sscanf (input+6, "%d", &depth);
 	raw_nodes = 0;
-	perft (depth);
+	perft (depth, white_to_move);
 	printf ("Raw nodes for depth %d: %ld\n", depth, raw_nodes);
       }
       else if (!strcmp (input, "new")) {
-	init_game ();
+	init_game (&white_to_move);
 	/* refresh our hash tables: */
 	refresh_hash ();
 	force_mode = FALSE;
@@ -309,7 +310,7 @@ int main (int argc, char *argv[]) {
       }
       else if (!strncmp (input, "result", 6)) {
 	ics_game_end ();
-	init_game ();
+	init_game (&white_to_move);
 	force_mode = FALSE;
 	comp_color = 0;
       }

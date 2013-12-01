@@ -38,7 +38,7 @@ SOFTWARE.
 #include "rand.h"
 
 
-d_long compute_hash (void) {
+d_long compute_hash (const int white_to_move) {
 
   /* compute and return the initial hash value for the position */
 
@@ -65,46 +65,44 @@ d_long compute_hash (void) {
   xor (&this_pos, color_h_values[white_to_move]);
 
   return (this_pos);
-
 }
 
 
-void hash_to_pv (int depth) {
+void hash_to_pv (int depth, int white_to_move) {
 
-  /* try to extract the PV from hash info */
+    /* try to extract the PV from hash info */
 
-  hash_s *hash_p;
-  d_long temp_hash, hash;
-  int ep_temp;
-  move_s move, ign_me;
-  char str_move[6];
+    hash_s *hash_p;
+    d_long temp_hash, hash;
+    int ep_temp;
+    move_s move, ign_me;
+    char str_move[6];
 
-  if (!depth)
-    return;
+    if (!depth)
+        return;
 
-  /* lookup our hash: */
-  hash_p = hash_table + (hash_mask & cur_pos.x1);
-  hash = hash_p->hash;
-  if (hash.x1 == cur_pos.x1 && hash.x2 == cur_pos.x2) {
-    move = hash_p->move;
-    comp_to_coord (move, str_move);
-    if (verify_coord (str_move, &ign_me)) {
-      pv[1][i_depth-depth+1] = move;
-      pv_length[1] = i_depth-depth+2;
-      temp_hash = cur_pos;
-      ep_temp = ep_square;
-      make (&move, 0);
-      ply++;
-      if (check_legal (&move, 0)) {
-	hash_to_pv (depth-1);
-      }
-      ply--;
-      unmake (&move, 0);
-      ep_square = ep_temp;
-      cur_pos = temp_hash;
+    /* lookup our hash: */
+    hash_p = hash_table + (hash_mask & cur_pos.x1);
+    hash = hash_p->hash;
+    if (hash.x1 == cur_pos.x1 && hash.x2 == cur_pos.x2) {
+        move = hash_p->move;
+        comp_to_coord (move, str_move);
+        if (verify_coord (str_move, &ign_me, white_to_move)) {
+            pv[1][i_depth-depth+1] = move;
+            pv_length[1] = i_depth-depth+2;
+            temp_hash = cur_pos;
+            ep_temp = ep_square;
+            make (&move, 0, &white_to_move);
+            ply++;
+            if (check_legal (&move, 0, white_to_move)) {
+                hash_to_pv (depth-1, white_to_move);
+            }
+            ply--;
+            unmake (&move, 0, &white_to_move);
+            ep_square = ep_temp;
+            cur_pos = temp_hash;
+        }
     }
-  }
-
 }
 
 

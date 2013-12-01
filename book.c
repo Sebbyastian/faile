@@ -117,7 +117,7 @@ void b_shut_down (int status) {
 }
 
 
-move_s book_move (void) {
+move_s book_move (int white_to_move) {
 
   /* select a move from the book.  Try to favour the move that occurs the
      most, but also add some randomness to it so that we don't play the same
@@ -148,24 +148,24 @@ move_s book_move (void) {
   temp_hash = cur_pos;
 
   srand ((int) time (0));
-  
+
   /* generate moves: */
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
 
   /* loop through the moves: */
   for (i = 0; i < num_moves; i++) {
-    make (&moves[0], i);
+    make (&moves[0], i, &white_to_move);
     assert (cur_pos.x1 == compute_hash ().x1 &&
 	    cur_pos.x2 == compute_hash ().x2);
     ply++;
 
     /* check in the book if this is a legal move: */
-    if (check_legal (&moves[0], i)) {
+    if (check_legal (&moves[0], i, white_to_move)) {
       scores[i] = search_book (book_f);
     }
 
     ply--;
-    unmake (&moves[0], i);
+    unmake (&moves[0], i, &white_to_move);
     ep_square = ep_temp;
     cur_pos = temp_hash;
   }
@@ -197,7 +197,7 @@ move_s book_move (void) {
 
   /* make sure our book move is legal in the current position: */
   comp_to_coord (move, str_move);
-  if (verify_coord (str_move, &ign_me)) {
+  if (verify_coord (str_move, &ign_me, white_to_move)) {
     return (move);
   }
   else {
@@ -334,7 +334,7 @@ bool is_trailing (char c) {
 }
 
 
-void make_book (char *file_name, int max_ply) {
+void make_book (char *file_name, int max_ply, int *white_to_move) {
 
   /* Make our book file faile.obk from the input file named file_name,
      using a maximum ply depth of max_ply */
@@ -354,7 +354,7 @@ void make_book (char *file_name, int max_ply) {
 
   init_hash_values ();
   init_b_hash_tables ();
-  init_game ();
+  init_game (white_to_move);
 
   printf ("\nMaking a new book from input file %s.\n", file_name);
   printf ("(Max book ply of %d)\n", max_ply);
@@ -382,7 +382,7 @@ void make_book (char *file_name, int max_ply) {
 	fscanf (pgn_in, "%*[^\n]");
 	book_state = s_comment;
 	show_counter (++game_count);
-	init_game ();
+	init_game (white_to_move);
 	legal = TRUE;
       }
     }
@@ -402,10 +402,10 @@ void make_book (char *file_name, int max_ply) {
     if (book_state == s_moves) {
       if (possible_move (input)) {
 	if (legal) {
-	  if (is_valid_comp (pgn_to_comp (input, white_to_move))) {
+	  if (is_valid_comp (pgn_to_comp (input, *white_to_move))) {
 	    /* we have a legal move: */
-	    move = pgn_to_comp (input, white_to_move);
-	    make (&move, 0);
+	    move = pgn_to_comp (input, *white_to_move);
+	    make (&move, 0, white_to_move);
 	    reset_piece_square ();
 	    /* add to our book if it's less than max_ply: */
 	    if (game_ply <= max_ply) {
@@ -624,7 +624,7 @@ bool possible_move (char *input) {
 }
 
 
-move_s pgn_to_comp (const char *input, const int white_to_move) {
+move_s pgn_to_comp (const char *input, int white_to_move) {
 
   /* try to translate a "reasonable" PGN/SAN move into Faile's internal
      move format.  The algorithm for this function is based upon the
@@ -883,7 +883,7 @@ move_s pgn_to_comp (const char *input, const int white_to_move) {
 
   /* try to match up our details with a move: */
   num_moves = 0;
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
 
   /* compare the info we have now to what is generated: */
   for (i = 0; i < num_moves; i++) {
@@ -907,14 +907,14 @@ move_s pgn_to_comp (const char *input, const int white_to_move) {
       if (legal) {
 	temp_hash = cur_pos;
 	ep_temp = ep_square;
-	make (&moves[0], i);
+	make (&moves[0], i, &white_to_move);
 	ply++;
-	if (check_legal (&moves[0], i)) {
+	if (check_legal (&moves[0], i, white_to_move)) {
 	  ret_move = moves[i];
 	  num_matches++;
 	}
 	ply--;
-	unmake (&moves[0], i);
+	unmake (&moves[0], i, &white_to_move);
 	ep_square = ep_temp;
 	cur_pos = temp_hash;
       }

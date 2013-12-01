@@ -285,7 +285,7 @@ void ics_game_end (void) {
 }
 
 
-void init_game (void) {
+void init_game (int *white_to_move) {
 
   /* set up a new game: */
 
@@ -311,7 +311,7 @@ void init_game (void) {
   for (i = 0; i <= 143; i++)
     moved[i] = 0;
 
-  white_to_move = 1;
+  *white_to_move = 1;
   ep_square = 0;
   wking_loc = 30;
   bking_loc = 114;
@@ -335,7 +335,7 @@ void init_game (void) {
 
   /* compute the initial hash: */
   srand (173);
-  cur_pos = compute_hash ();
+  cur_pos = compute_hash (*white_to_move);
 
   /* set the first 3 rep entry: */
   rep_history[0] = cur_pos;
@@ -436,7 +436,7 @@ bool is_valid_comp (move_s in_move) {
 }
 
 
-void parse_cmdline (int argc, char *argv[]) {
+void parse_cmdline (int argc, char *argv[], int *white_to_move) {
 
   /* parse command line switches */
 
@@ -467,7 +467,7 @@ void parse_cmdline (int argc, char *argv[]) {
       if (++i >= argc) {
 	/* no max ply specified, use default of 20: */
 	fprintf (stderr, "No max ply set, max ply defaulted to 20.\n");
-	make_book (argv[i-1], 20);
+	make_book (argv[i-1], 20, white_to_move);
       }
       else {
 	/* max ply is specified */
@@ -481,7 +481,7 @@ void parse_cmdline (int argc, char *argv[]) {
 		   MAX_B_PLY, MAX_B_PLY);
 	  tmp = MAX_B_PLY;
 	}
-	make_book (argv[i-1], tmp);
+	make_book (argv[i-1], tmp, white_to_move);
       }
     }
     else {
@@ -493,7 +493,7 @@ void parse_cmdline (int argc, char *argv[]) {
 }
 
 
-void perft_debug (void) {
+void perft_debug (int white_to_move) {
 
   /* A function to debug the move gen by doing perft's, showing the board, and
      accepting move input */
@@ -502,7 +502,7 @@ void perft_debug (void) {
   move_s move;
   int depth;
 
-  init_game ();
+  init_game (&white_to_move);
 
   /* go into a loop of doing a perft(), then making the moves the user inputs
      until the user enters "exit" or "quit" */
@@ -514,7 +514,7 @@ void perft_debug (void) {
 
     /* print out the number of raw nodes for this depth: */
     raw_nodes = 0;
-    perft (depth);
+    perft (depth, white_to_move);
     printf ("\n\nRaw nodes for depth %d: %ld\n\n", depth, raw_nodes);
 
     /* print out the board: */
@@ -529,7 +529,7 @@ void perft_debug (void) {
       exit (EXIT_SUCCESS);
     }
 
-    if (!verify_coord (input, &move)) {
+    if (!verify_coord (input, &move, white_to_move)) {
       /* loop until we get a legal move or an exit/quit: */
       do {
 	printf ("\nIllegal move/command!  Please input a new move/command:\n");
@@ -540,10 +540,10 @@ void perft_debug (void) {
 	if (!strcmp (input, "exit") || !strcmp (input, "quit")) {
 	  exit (EXIT_SUCCESS);
 	}
-      } while (!verify_coord (input, &move));
+      } while (!verify_coord (input, &move, white_to_move));
     }
 
-    make (&move, 0);
+    make (&move, 0, &white_to_move);
   }
 }
 
@@ -728,7 +728,7 @@ void toggle_bool (bool *var) {
 }
 
 
-void tree_debug (void) {
+void tree_debug (int white_to_move) {
 
   /* A function to make a tree of output at a certain depth and print out
      the number of nodes: */
@@ -737,7 +737,7 @@ void tree_debug (void) {
   FILE *stream;
   int depth;
 
-  init_game ();
+  init_game (&white_to_move);
 
   /* get the desired depth to generate to: */
   printf ("\nPlease enter the desired depth:\n");
@@ -759,19 +759,19 @@ void tree_debug (void) {
     printf ("\nDo you want to output diagrams? (y/n)\n");
     rinput (input, STR_BUFF, stdin);
 
-    tree (depth, 0, stream, input);
+    tree (depth, 0, stream, input, white_to_move);
   }
 
   /* print out the number of raw nodes for this depth: */
   raw_nodes = 0;
-  perft (depth);
+  perft (depth, white_to_move);
   printf ("\n\n%s\nRaw nodes for depth %d: %ld\n%s\n\n", divider,
 	  depth, raw_nodes, divider);
 
 }
 
 
-bool verify_coord (char input[], move_s *move) {
+bool verify_coord (char input[], move_s *move, const int white_to_move) {
 
   /* checks to see if the move the user entered was legal or not, returns
      true if the move was legal, and stores the legal move inside move */
@@ -785,21 +785,22 @@ bool verify_coord (char input[], move_s *move) {
   ep_temp = ep_square;
   temp_hash = cur_pos;
   num_moves = 0;
-  gen (&moves[0], &num_moves);
+  gen (&moves[0], &num_moves, white_to_move);
 
+  int white_to_move2 = white_to_move;
   /* compare user input to the generated moves: */
   for (i = 0; i < num_moves; i++) {
-    comp_to_coord (moves[i], comp_move);
-    if (!strcmp (input, comp_move)) {
-      make (&moves[0], i);
-      if (check_legal (&moves[0], i)) {
-	legal = TRUE;
-	*move = moves[i];
+      comp_to_coord (moves[i], comp_move);
+      if (!strcmp (input, comp_move)) {
+          make (&moves[0], i, &white_to_move2);
+          if (check_legal (&moves[0], i, white_to_move2)) {
+              legal = TRUE;
+              *move = moves[i];
+          }
+          unmake (&moves[0], i, &white_to_move2);
+          ep_square = ep_temp;
+          cur_pos = temp_hash;
       }
-      unmake (&moves[0], i);
-      ep_square = ep_temp;
-      cur_pos = temp_hash;
-    }
   }
 
   return (legal);

@@ -37,7 +37,7 @@ SOFTWARE.
 #include "extvars.h"
 #include "protos.h"
 
-bool check_legal (move_s moves[], int m) {
+bool check_legal (move_s moves[], int m, const int white_to_move) {
 
   /* determines if a move made was legal.  Checks to see if the player who
      just moved castled through check, or is in check.  If the move made
@@ -96,7 +96,7 @@ bool check_legal (move_s moves[], int m) {
 }
 
 
-void gen (move_s moves[], int *num_moves) {
+void gen (move_s moves[], int *num_moves, const int white_to_move) {
 
   /* generate pseudo-legal moves, and place them in the moves array */
 
@@ -304,7 +304,7 @@ void gen (move_s moves[], int *num_moves) {
 }
 
 
-bool in_check (void) {
+bool in_check (const int white_to_move) {
 
   /* return true if the side to move is in check: */
 
@@ -417,7 +417,7 @@ bool is_attacked (int square, int color) {
 }
 
 
-void make (move_s moves[], int i) {
+void make (move_s moves[], int i, int *white_to_move) {
 
   /* make a move */
 
@@ -484,7 +484,7 @@ void make (move_s moves[], int i) {
       board[from] = npiece;
       moved[target]++;
       moved[from]++;
-      white_to_move ^= 1;
+      *white_to_move ^= 1;
       return;
     }
 
@@ -497,7 +497,7 @@ void make (move_s moves[], int i) {
       moved[target]++;
       moved[from]++;
       moved[target-12]++;
-      white_to_move ^= 1;
+      *white_to_move ^= 1;
       moves[i].cap_num = squares[target-12];
       pieces[squares[target-12]] = 0;
       squares[target-12] = 0;
@@ -515,7 +515,7 @@ void make (move_s moves[], int i) {
     board[from] = npiece;
     moved[target]++;
     moved[from]++;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
     return;
 
   }
@@ -530,7 +530,7 @@ void make (move_s moves[], int i) {
       board[from] = npiece;
       moved[target]++;
       moved[from]++;
-      white_to_move ^= 1;
+      *white_to_move ^= 1;
       return;
     }
 
@@ -543,7 +543,7 @@ void make (move_s moves[], int i) {
       moved[target]++;
       moved[from]++;
       moved[target+12]++;
-      white_to_move ^= 1;
+      *white_to_move ^= 1;
       moves[i].cap_num = squares[target+12];
       pieces[squares[target+12]] = 0;
       squares[target+12] = 0;
@@ -561,7 +561,7 @@ void make (move_s moves[], int i) {
     board[from] = npiece;
     moved[target]++;
     moved[from]++;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
     return;
   }
 
@@ -591,7 +591,7 @@ void make (move_s moves[], int i) {
       moved[target]++;
       moved[from]++;
     }
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
     return;
   }
 
@@ -614,7 +614,7 @@ void make (move_s moves[], int i) {
     board[from] = npiece;
     moved[target]++;
     moved[from]++;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
 
     /* check for castling: */
     /* check for white kingside castling: */
@@ -668,7 +668,7 @@ void make (move_s moves[], int i) {
     board[from] = npiece;
     moved[target]++;
     moved[from]++;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
 
     /* check for castling: */
     /* check for black kingside castling: */
@@ -987,7 +987,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target) {
 }
 
 
-void unmake (move_s moves[], int i) {
+void unmake (move_s moves[], int i, int *white_to_move) {
 
   /* un-make a move */
 
@@ -1034,7 +1034,7 @@ void unmake (move_s moves[], int i) {
       moved[target]--;
       moved[from]--;
       moved[target-12]--;
-      white_to_move ^= 1;
+      *white_to_move ^= 1;
       squares[target-12] = moves[i].cap_num;
       pieces[moves[i].cap_num] = target-12;
       squares[target] = 0;
@@ -1046,7 +1046,7 @@ void unmake (move_s moves[], int i) {
     board[from] = wpawn;
     moved[target]--;
     moved[from]--;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
     return;
 
   }
@@ -1061,7 +1061,7 @@ void unmake (move_s moves[], int i) {
       moved[target]--;
       moved[from]--;
       moved[target+12]--;
-      white_to_move ^= 1;
+      *white_to_move ^= 1;
       squares[target+12] = moves[i].cap_num;
       pieces[moves[i].cap_num] = target+12;
       squares[target] = 0;
@@ -1073,7 +1073,7 @@ void unmake (move_s moves[], int i) {
     board[from] = bpawn;
     moved[target]--;
     moved[from]--;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
     return;
 
   }
@@ -1084,7 +1084,7 @@ void unmake (move_s moves[], int i) {
     board[target] = captured;
     moved[target]--;
     moved[from]--;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
     return;
   }
 
@@ -1096,7 +1096,7 @@ void unmake (move_s moves[], int i) {
       board[from] = wpawn;
       moved[target]--;
       moved[from]--;
-      white_to_move ^= 1;
+      *white_to_move ^= 1;
       return;
     }
 
@@ -1105,7 +1105,7 @@ void unmake (move_s moves[], int i) {
     board[from] = bpawn;
     moved[target]--;
     moved[from]--;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
     return;
   }
 
@@ -1120,7 +1120,7 @@ void unmake (move_s moves[], int i) {
     board[from] = wking;
     moved[target]--;
     moved[from]--;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
 
     /* check for castling: */
     /* check for white kingside castling: */
@@ -1162,7 +1162,7 @@ void unmake (move_s moves[], int i) {
     board[from] = bking;
     moved[target]--;
     moved[from]--;
-    white_to_move ^= 1;
+    *white_to_move ^= 1;
 
     /* check for castling: */
     /* check for black kingside castling: */
