@@ -37,7 +37,7 @@ SOFTWARE.
 #include "extvars.h"
 #include "protos.h"
 
-bool check_legal (move_s moves[], int m, const int white_to_move) {
+bool check_legal (move_s moves[], int m, const int white_to_move, const int wking_loc, const int bking_loc) {
 
   /* determines if a move made was legal.  Checks to see if the player who
      just moved castled through check, or is in check.  If the move made
@@ -304,7 +304,7 @@ void gen (move_s moves[], int *num_moves, const int white_to_move) {
 }
 
 
-bool in_check (const int white_to_move) {
+bool in_check (const int white_to_move, const int wking_loc, const int bking_loc) {
 
   /* return true if the side to move is in check: */
 
@@ -417,7 +417,7 @@ bool is_attacked (int square, int color) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc) {
 
   /* make a move */
 
@@ -607,7 +607,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     }
 
     /* record the new white king location: */
-    wking_loc = target;
+    *wking_loc = target;
 
     /* perform the white king's move: */
     board[target] = wking;
@@ -661,7 +661,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     }
 
     /* record the new black king location: */
-    bking_loc = target;
+    *bking_loc = target;
 
     /* perform the black king's move: */
     board[target] = bking;
@@ -987,7 +987,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target) {
 }
 
 
-void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled) {
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc) {
 
   /* un-make a move */
 
@@ -1113,7 +1113,7 @@ void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int 
   /* White king moves first: */
   if (board[target] == wking) {
     /* record the new white king location: */
-    wking_loc = from;
+    *wking_loc = from;
 
     /* perform the white king's move: */
     board[target] = captured;
@@ -1155,7 +1155,7 @@ void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int 
   /* now we have only black king moves left: */
   else {
     /* record the new black king location: */
-    bking_loc = from;
+    *bking_loc = from;
 
     /* perform the black king's move: */
     board[target] = captured;

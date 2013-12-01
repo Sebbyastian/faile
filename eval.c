@@ -390,24 +390,24 @@ long int end_eval (const int white_to_move) {
 }
 
 
-long int eval (const int white_to_move, const int white_castled, const int black_castled) {
+long int eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc) {
 
   /* select the appropriate eval() routine: */
 
   if (piece_count > 11) {
-    return (opn_eval (white_to_move, white_castled, black_castled));
+    return (opn_eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc));
   }
   else if (piece_count < 5) {
     return (end_eval (white_to_move));
   }
   else {
-    return (mid_eval (white_to_move, white_castled, black_castled));
+    return (mid_eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc));
   }
 
 }
 
 
-long int mid_eval (const int white_to_move, const int white_castled, const int black_castled) {
+long int mid_eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc) {
 
   /* return a score for the current middlegame position: */
 
@@ -734,7 +734,7 @@ long int mid_eval (const int white_to_move, const int white_castled, const int b
 
 }
 
-long int opn_eval (const int white_to_move, const int white_castled, const int black_castled) {
+long int opn_eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc) {
 
   /* return a score for the current opening position: */
 
