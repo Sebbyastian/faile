@@ -402,9 +402,9 @@ void make_book (char *file_name, int max_ply) {
     if (book_state == s_moves) {
       if (possible_move (input)) {
 	if (legal) {
-	  if (is_valid_comp (pgn_to_comp (input))) {
+	  if (is_valid_comp (pgn_to_comp (input, white_to_move))) {
 	    /* we have a legal move: */
-	    move = pgn_to_comp (input);
+	    move = pgn_to_comp (input, white_to_move);
 	    make (&move, 0);
 	    reset_piece_square ();
 	    /* add to our book if it's less than max_ply: */
@@ -624,7 +624,7 @@ bool possible_move (char *input) {
 }
 
 
-move_s pgn_to_comp (const char *input) {
+move_s pgn_to_comp (const char *input, const int white_to_move) {
 
   /* try to translate a "reasonable" PGN/SAN move into Faile's internal
      move format.  The algorithm for this function is based upon the

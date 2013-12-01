@@ -193,7 +193,7 @@ long int qsearch (int alpha, int beta, int depth) {
 
   /* return our score if we're at a leaf node: */
   if (!depth) {
-    score = eval ();
+    score = eval (white_to_move);
     return score;
   }
 
@@ -202,7 +202,7 @@ long int qsearch (int alpha, int beta, int depth) {
   ep_temp = ep_square;
 
   /* see if our position's score is good enough that we can exit early: */
-  standpat = eval ();
+  standpat = eval (white_to_move);
   if (standpat >= beta) {
     return standpat;
   }

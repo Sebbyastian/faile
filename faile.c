@@ -192,9 +192,9 @@ int main (int argc, char *argv[]) {
     }
 
     /* check to see if we have a move.  If it's legal, play it. */
-    if (is_valid_comp (pgn_to_comp (input))) {
+    if (is_valid_comp (pgn_to_comp (input, white_to_move))) {
       /* good SAN input style move */
-      move = pgn_to_comp (input);
+      move = pgn_to_comp (input, white_to_move);
       make (&move, 0);
       reset_piece_square ();
       if (show_board) {

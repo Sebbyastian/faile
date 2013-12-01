@@ -145,7 +145,7 @@ int rev_rank[9] = {
 0,8,7,6,5,4,3,2,1};
 
 
-long int end_eval (void) {
+long int end_eval (const int white_to_move) {
 
   /* return a score for the current endgame position: */
 
@@ -390,24 +390,24 @@ long int end_eval (void) {
 }
 
 
-long int eval (void) {
+long int eval (const int white_to_move) {
 
   /* select the appropriate eval() routine: */
 
   if (piece_count > 11) {
-    return (opn_eval ());
+    return (opn_eval (white_to_move));
   }
   else if (piece_count < 5) {
-    return (end_eval ());
+    return (end_eval (white_to_move));
   }
   else {
-    return (mid_eval ());
+    return (mid_eval (white_to_move));
   }
 
 }
 
 
-long int mid_eval (void) {
+long int mid_eval (const int white_to_move) {
 
   /* return a score for the current middlegame position: */
 
@@ -734,7 +734,7 @@ long int mid_eval (void) {
 
 }
 
-long int opn_eval (void) {
+long int opn_eval (const int white_to_move) {
 
   /* return a score for the current opening position: */
 

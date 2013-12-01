@@ -74,6 +74,7 @@ clean:
 	rm -f *.o
 	rm -f *.out
 	rm -f *~
+	rm faile
 
 clean_win:
 	del *.o
