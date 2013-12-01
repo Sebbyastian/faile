@@ -417,7 +417,7 @@ bool is_attacked (int square, int color) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled) {
 
   /* make a move */
 
@@ -625,7 +625,7 @@ void make (move_s moves[], int i, int *white_to_move) {
       board[31] = wrook;
       moved[33]++;
       moved[31]++;
-      white_castled = wck;
+      *white_castled = wck;
       pieces[squares[33]] = 31;
       squares[31] = squares[33];
       squares[33] = 0;
@@ -640,7 +640,7 @@ void make (move_s moves[], int i, int *white_to_move) {
       board[29] = wrook;
       moved[26]++;
       moved[29]++;
-      white_castled = wcq;
+      *white_castled = wcq;
       pieces[squares[26]] = 29;
       squares[29] = squares[26];
       squares[26] = 0;
@@ -679,7 +679,7 @@ void make (move_s moves[], int i, int *white_to_move) {
       board[115] = brook;
       moved[117]++;
       moved[115]++;
-      black_castled = bck;
+      *black_castled = bck;
       pieces[squares[117]] = 115;
       squares[115] = squares[117];
       squares[117] = 0;
@@ -694,7 +694,7 @@ void make (move_s moves[], int i, int *white_to_move) {
       board[113] = brook;
       moved[110]++;
       moved[113]++;
-      black_castled = bcq;
+      *black_castled = bcq;
       pieces[squares[110]] = 113;
       squares[113] = squares[110];
       squares[110] = 0;
@@ -987,7 +987,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target) {
 }
 
 
-void unmake (move_s moves[], int i, int *white_to_move) {
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled) {
 
   /* un-make a move */
 
@@ -1129,7 +1129,7 @@ void unmake (move_s moves[], int i, int *white_to_move) {
       board[31] = npiece;
       moved[33]--;
       moved[31]--;
-      white_castled = no_castle;
+      *white_castled = no_castle;
       squares[33] = squares[31];
       squares[31] = 0;
       pieces[squares[33]] = 33;
@@ -1142,7 +1142,7 @@ void unmake (move_s moves[], int i, int *white_to_move) {
       board[29] = npiece;
       moved[26]--;
       moved[29]--;
-      white_castled = no_castle;
+      *white_castled = no_castle;
       squares[26] = squares[29];
       squares[29] = 0;
       pieces[squares[26]] = 26;
@@ -1171,7 +1171,7 @@ void unmake (move_s moves[], int i, int *white_to_move) {
       board[115] = npiece;
       moved[117]--;
       moved[115]--;
-      black_castled = no_castle;
+      *black_castled = no_castle;
       squares[117] = squares[115];
       squares[115] = 0;
       pieces[squares[117]] = 117;
@@ -1184,7 +1184,7 @@ void unmake (move_s moves[], int i, int *white_to_move) {
       board[113] = npiece;
       moved[110]--;
       moved[113]--;
-      black_castled = no_castle;
+      *black_castled = no_castle;
       squares[110] = squares[113];
       squares[113] = 0;
       pieces[squares[110]] = 110;

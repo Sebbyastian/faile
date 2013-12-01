@@ -68,7 +68,7 @@ d_long compute_hash (const int white_to_move) {
 }
 
 
-void hash_to_pv (int depth, int white_to_move) {
+void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled) {
 
     /* try to extract the PV from hash info */
 
@@ -87,18 +87,18 @@ void hash_to_pv (int depth, int white_to_move) {
     if (hash.x1 == cur_pos.x1 && hash.x2 == cur_pos.x2) {
         move = hash_p->move;
         comp_to_coord (move, str_move);
-        if (verify_coord (str_move, &ign_me, white_to_move)) {
+        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled)) {
             pv[1][i_depth-depth+1] = move;
             pv_length[1] = i_depth-depth+2;
             temp_hash = cur_pos;
             ep_temp = ep_square;
-            make (&move, 0, &white_to_move);
+            make (&move, 0, &white_to_move, &white_castled, &black_castled);
             ply++;
             if (check_legal (&move, 0, white_to_move)) {
-                hash_to_pv (depth-1, white_to_move);
+                hash_to_pv (depth-1, white_to_move, white_castled, black_castled);
             }
             ply--;
-            unmake (&move, 0, &white_to_move);
+            unmake (&move, 0, &white_to_move, &white_castled, &black_castled);
             ep_square = ep_temp;
             cur_pos = temp_hash;
         }

@@ -285,7 +285,7 @@ long int end_eval (const int white_to_move) {
 
       case (wrook):
 	score += 500;
-	
+
 	/* bonus for being on the 7th (a bit bigger bonus in the endgame, b/c
 	   a rook on the 7th can be a killer in the endgame): */
 	if (rank == 7)
@@ -390,24 +390,24 @@ long int end_eval (const int white_to_move) {
 }
 
 
-long int eval (const int white_to_move) {
+long int eval (const int white_to_move, const int white_castled, const int black_castled) {
 
   /* select the appropriate eval() routine: */
 
   if (piece_count > 11) {
-    return (opn_eval (white_to_move));
+    return (opn_eval (white_to_move, white_castled, black_castled));
   }
   else if (piece_count < 5) {
     return (end_eval (white_to_move));
   }
   else {
-    return (mid_eval (white_to_move));
+    return (mid_eval (white_to_move, white_castled, black_castled));
   }
 
 }
 
 
-long int mid_eval (const int white_to_move) {
+long int mid_eval (const int white_to_move, const int white_castled, const int black_castled) {
 
   /* return a score for the current middlegame position: */
 
@@ -533,7 +533,7 @@ long int mid_eval (const int white_to_move) {
 
       case (wrook):
 	score += 500;
-	
+
 	/* bonus for being on the 7th: */
 	if (rank == 7)
 	  score += 8;
@@ -627,7 +627,7 @@ long int mid_eval (const int white_to_move) {
 	if (rank < white_back_pawn[pawn_file-1] && pawns[1][pawn_file-1])
 	  score -= 7*(white_back_pawn[pawn_file-1]-rank-1);
 	else
-	  score -= 12;	  
+	  score -= 12;
 
 	break;
 
@@ -734,7 +734,7 @@ long int mid_eval (const int white_to_move) {
 
 }
 
-long int opn_eval (const int white_to_move) {
+long int opn_eval (const int white_to_move, const int white_castled, const int black_castled) {
 
   /* return a score for the current opening position: */
 
@@ -872,7 +872,7 @@ long int opn_eval (const int white_to_move) {
 
       case (wrook):
 	score += 500;
-	
+
 	/* bonus for being on the 7th: */
 	if (rank == 7)
 	  score += 8;
