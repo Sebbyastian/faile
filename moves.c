@@ -96,7 +96,7 @@ bool check_legal (move_s moves[], int m, const int white_to_move, const int wkin
 }
 
 
-void gen (move_s moves[], int *num_moves, const int white_to_move) {
+void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square) {
 
   /* generate pseudo-legal moves, and place them in the moves array */
 
@@ -417,7 +417,7 @@ bool is_attacked (int square, int color) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square) {
 
   /* make a move */
 
@@ -439,12 +439,12 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   xor (&cur_pos, h_values[board[from]][from]);
   xor (&cur_pos, h_values[board[target]][target]);
   xor (&cur_pos, h_values[board[from]][target]);
-  xor (&cur_pos, ep_h_values[ep_square]);
+  xor (&cur_pos, ep_h_values[*ep_square]);
   xor (&cur_pos, color_h_values[0]);
   xor (&cur_pos, color_h_values[1]);
 
   /* clear the en passant rights: */
-  ep_square = 0;
+  *ep_square = 0;
 
   /* update the 50 move info: */
   fifty_move[ply] = fifty;
@@ -507,8 +507,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     /* otherwise, we have a "regular" pawn move: */
     /* first check to see if we've moved a pawn up 2 squares: */
     if (target == from+24) {
-      ep_square = from+12;
-      xor (&cur_pos, ep_h_values[ep_square]);
+      *ep_square = from+12;
+      xor (&cur_pos, ep_h_values[*ep_square]);
     }
 
     board[target] = wpawn;
@@ -553,8 +553,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     /* otherwise, we have a "regular" pawn move: */
     /* first check to see if we've moved a pawn down 2 squares: */
     if (target == from-24) {
-      ep_square = from-12;
-      xor (&cur_pos, ep_h_values[ep_square]);
+      *ep_square = from-12;
+      xor (&cur_pos, ep_h_values[*ep_square]);
     }
 
     board[target] = bpawn;
@@ -987,7 +987,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target) {
 }
 
 
-void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc) {
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square) {
 
   /* un-make a move */
 

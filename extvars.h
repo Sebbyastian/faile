@@ -34,7 +34,7 @@ SOFTWARE.
 
 extern char divider[50];
 
-extern int board[144], moved[144], ep_square, result, ply, pv_length[PV_BUFF],
+extern int board[144], moved[144], result, ply, pv_length[PV_BUFF],
   history_h[144][144], pieces[33], squares[144], num_pieces, i_depth, fifty,
   fifty_move[PV_BUFF], game_ply;
 
