@@ -117,7 +117,7 @@ void b_shut_down (int status) {
 }
 
 
-move_s book_move (int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[]) {
+move_s book_move (int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[]) {
 
   /* select a move from the book.  Try to favour the move that occurs the
      most, but also add some randomness to it so that we don't play the same
@@ -150,13 +150,13 @@ move_s book_move (int white_to_move, int white_castled, int black_castled, int w
   srand ((int) time (0));
 
   /* generate moves: */
-  gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board);
+  gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board, moved);
 
   /* loop through the moves: */
   for (i = 0; i < num_moves; i++) {
-    make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
-    assert (cur_pos.x1 == compute_hash (board).x1 &&
-	    cur_pos.x2 == compute_hash (board).x2);
+    make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved);
+    assert (cur_pos.x1 == compute_hash (board, moved).x1 &&
+	    cur_pos.x2 == compute_hash (board, moved).x2);
     ply++;
 
     /* check in the book if this is a legal move: */
@@ -165,7 +165,7 @@ move_s book_move (int white_to_move, int white_castled, int black_castled, int w
     }
 
     ply--;
-    unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
+    unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved);
     ep_square = ep_temp;
     cur_pos = temp_hash;
   }
@@ -197,7 +197,7 @@ move_s book_move (int white_to_move, int white_castled, int black_castled, int w
 
   /* make sure our book move is legal in the current position: */
   comp_to_coord (move, str_move);
-  if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board)) {
+  if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved)) {
     return (move);
   }
   else {
@@ -346,7 +346,7 @@ void make_book (char *file_name, int max_ply) {
   unsigned long int game_count = 0;
   bool legal = TRUE;
   move_s move = dummy;
-  int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144];
+  int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144];
   bool captures;
 
   if ((pgn_in = fopen (file_name, "r")) == NULL) {
@@ -356,7 +356,7 @@ void make_book (char *file_name, int max_ply) {
 
   init_hash_values ();
   init_b_hash_tables ();
-  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board);
+  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved);
 
   printf ("\nMaking a new book from input file %s.\n", file_name);
   printf ("(Max book ply of %d)\n", max_ply);
@@ -384,7 +384,7 @@ void make_book (char *file_name, int max_ply) {
 	fscanf (pgn_in, "%*[^\n]");
 	book_state = s_comment;
 	show_counter (++game_count);
-	init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board);
+	init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved);
 	legal = TRUE;
       }
     }
@@ -404,10 +404,10 @@ void make_book (char *file_name, int max_ply) {
     if (book_state == s_moves) {
       if (possible_move (input)) {
 	if (legal) {
-	  if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board))) {
+	  if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved))) {
 	    /* we have a legal move: */
-	    move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
-	    make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
+	    move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved);
+	    make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved);
 	    reset_piece_square (board);
 	    /* add to our book if it's less than max_ply: */
 	    if (game_ply <= max_ply) {
@@ -625,7 +625,7 @@ bool possible_move (char *input) {
 }
 
 
-move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[]) {
+move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[]) {
 
   /* try to translate a "reasonable" PGN/SAN move into Faile's internal
      move format.  The algorithm for this function is based upon the
@@ -882,7 +882,7 @@ move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int
 
   /* try to match up our details with a move: */
   num_moves = 0;
-  gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board);
+  gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board, moved);
 
   /* compare the info we have now to what is generated: */
   for (i = 0; i < num_moves; i++) {
@@ -906,14 +906,14 @@ move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int
       if (legal) {
 	temp_hash = cur_pos;
 	ep_temp = ep_square;
-	make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
+	make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved);
 	ply++;
 	if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
 	  ret_move = moves[i];
 	  num_matches++;
 	}
 	ply--;
-	unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
+	unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved);
 	ep_square = ep_temp;
 	cur_pos = temp_hash;
       }
