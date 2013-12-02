@@ -96,7 +96,7 @@ bool check_legal (move_s moves[], int m, const int white_to_move, const int wkin
 }
 
 
-void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square) {
+void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square, const bool captures) {
 
   /* generate pseudo-legal moves, and place them in the moves array */
 
@@ -139,61 +139,61 @@ void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_
 	  break;
         case (wknight):
 	  /* use the knight offsets: */
-	  push_knight (&moves[0], num_moves, from, from+10);
-	  push_knight (&moves[0], num_moves, from, from-10);
-	  push_knight (&moves[0], num_moves, from, from+14);
-	  push_knight (&moves[0], num_moves, from, from-14);
-	  push_knight (&moves[0], num_moves, from, from+23);
-	  push_knight (&moves[0], num_moves, from, from-23);
-	  push_knight (&moves[0], num_moves, from, from+25);
-	  push_knight (&moves[0], num_moves, from, from-25);
+	  push_knight (&moves[0], num_moves, from, from+10, captures);
+	  push_knight (&moves[0], num_moves, from, from-10, captures);
+	  push_knight (&moves[0], num_moves, from, from+14, captures);
+	  push_knight (&moves[0], num_moves, from, from-14, captures);
+	  push_knight (&moves[0], num_moves, from, from+23, captures);
+	  push_knight (&moves[0], num_moves, from, from-23, captures);
+	  push_knight (&moves[0], num_moves, from, from+25, captures);
+	  push_knight (&moves[0], num_moves, from, from-25, captures);
 	  break;
         case (wbishop):
 	  /* use the bishop offsets: */
-	  push_slide (&moves[0], num_moves, from, from+13);
-	  push_slide (&moves[0], num_moves, from, from-13);
-	  push_slide (&moves[0], num_moves, from, from+11);
-	  push_slide (&moves[0], num_moves, from, from-11);
+	  push_slide (&moves[0], num_moves, from, from+13, captures);
+	  push_slide (&moves[0], num_moves, from, from-13, captures);
+	  push_slide (&moves[0], num_moves, from, from+11, captures);
+	  push_slide (&moves[0], num_moves, from, from-11, captures);
 	  break;
         case (wrook):
 	  /* use the rook offsets: */
-	  push_slide (&moves[0], num_moves, from, from+12);
-	  push_slide (&moves[0], num_moves, from, from-12);
-	  push_slide (&moves[0], num_moves, from, from+1);
-	  push_slide (&moves[0], num_moves, from, from-1);
+	  push_slide (&moves[0], num_moves, from, from+12, captures);
+	  push_slide (&moves[0], num_moves, from, from-12, captures);
+	  push_slide (&moves[0], num_moves, from, from+1, captures);
+	  push_slide (&moves[0], num_moves, from, from-1, captures);
 	  break;
         case (wqueen):
 	  /* use the queen offsets: */
-	  push_slide (&moves[0], num_moves, from, from+13);
-	  push_slide (&moves[0], num_moves, from, from-13);
-	  push_slide (&moves[0], num_moves, from, from+11);
-	  push_slide (&moves[0], num_moves, from, from-11);
-	  push_slide (&moves[0], num_moves, from, from+12);
-	  push_slide (&moves[0], num_moves, from, from-12);
-	  push_slide (&moves[0], num_moves, from, from+1);
-	  push_slide (&moves[0], num_moves, from, from-1);
+	  push_slide (&moves[0], num_moves, from, from+13, captures);
+	  push_slide (&moves[0], num_moves, from, from-13, captures);
+	  push_slide (&moves[0], num_moves, from, from+11, captures);
+	  push_slide (&moves[0], num_moves, from, from-11, captures);
+	  push_slide (&moves[0], num_moves, from, from+12, captures);
+	  push_slide (&moves[0], num_moves, from, from-12, captures);
+	  push_slide (&moves[0], num_moves, from, from+1, captures);
+	  push_slide (&moves[0], num_moves, from, from-1, captures);
 	  break;
         case (wking):
 	  /* use the king offsets for 'normal' moves: */
-	  push_king (&moves[0], num_moves, from, from+13, no_castle);
-	  push_king (&moves[0], num_moves, from, from-13, no_castle);
-	  push_king (&moves[0], num_moves, from, from+11, no_castle);
-	  push_king (&moves[0], num_moves, from, from-11, no_castle);
-	  push_king (&moves[0], num_moves, from, from+12, no_castle);
-	  push_king (&moves[0], num_moves, from, from-12, no_castle);
-	  push_king (&moves[0], num_moves, from, from+1, no_castle);
-	  push_king (&moves[0], num_moves, from, from-1, no_castle);
+	  push_king (&moves[0], num_moves, from, from+13, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-13, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from+11, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-11, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from+12, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-12, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from+1, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-1, no_castle, captures);
 	  /* castling moves: */
 	  if (from == 30 && !moved[30] && !captures) {
 	    /* kingside: */
 	    if (!moved[33] && board[33] == wrook)
 	      if (board[31] == npiece && board[32] == npiece)
-		push_king (&moves[0], num_moves, from, from+2, wck);
+		push_king (&moves[0], num_moves, from, from+2, wck, captures);
 	    /* queenside: */
 	    if (!moved[26] && board[26] == wrook)
 	      if (board[27] == npiece && board[28] == npiece
 		  && board[29] == npiece)
-		push_king (&moves[0], num_moves, from, from-2, wcq);
+		push_king (&moves[0], num_moves, from, from-2, wcq, captures);
 	  }
 	  break;
         default:
@@ -239,61 +239,61 @@ void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_
 	  break;
         case (bknight):
 	  /* use the knight offsets: */
-	  push_knight (&moves[0], num_moves, from, from+10);
-	  push_knight (&moves[0], num_moves, from, from-10);
-	  push_knight (&moves[0], num_moves, from, from+14);
-	  push_knight (&moves[0], num_moves, from, from-14);
-	  push_knight (&moves[0], num_moves, from, from+23);
-	  push_knight (&moves[0], num_moves, from, from-23);
-	  push_knight (&moves[0], num_moves, from, from+25);
-	  push_knight (&moves[0], num_moves, from, from-25);
+	  push_knight (&moves[0], num_moves, from, from+10, captures);
+	  push_knight (&moves[0], num_moves, from, from-10, captures);
+	  push_knight (&moves[0], num_moves, from, from+14, captures);
+	  push_knight (&moves[0], num_moves, from, from-14, captures);
+	  push_knight (&moves[0], num_moves, from, from+23, captures);
+	  push_knight (&moves[0], num_moves, from, from-23, captures);
+	  push_knight (&moves[0], num_moves, from, from+25, captures);
+	  push_knight (&moves[0], num_moves, from, from-25, captures);
 	  break;
         case (bbishop):
 	  /* use the bishop offsets: */
-	  push_slide (&moves[0], num_moves, from, from+13);
-	  push_slide (&moves[0], num_moves, from, from-13);
-	  push_slide (&moves[0], num_moves, from, from+11);
-	  push_slide (&moves[0], num_moves, from, from-11);
+	  push_slide (&moves[0], num_moves, from, from+13, captures);
+	  push_slide (&moves[0], num_moves, from, from-13, captures);
+	  push_slide (&moves[0], num_moves, from, from+11, captures);
+	  push_slide (&moves[0], num_moves, from, from-11, captures);
 	  break;
         case (brook):
 	  /* use the rook offsets: */
-	  push_slide (&moves[0], num_moves, from, from+12);
-	  push_slide (&moves[0], num_moves, from, from-12);
-	  push_slide (&moves[0], num_moves, from, from+1);
-	  push_slide (&moves[0], num_moves, from, from-1);
+	  push_slide (&moves[0], num_moves, from, from+12, captures);
+	  push_slide (&moves[0], num_moves, from, from-12, captures);
+	  push_slide (&moves[0], num_moves, from, from+1, captures);
+	  push_slide (&moves[0], num_moves, from, from-1, captures);
 	  break;
         case (bqueen):
 	  /* use the queen offsets: */
-	  push_slide (&moves[0], num_moves, from, from+13);
-	  push_slide (&moves[0], num_moves, from, from-13);
-	  push_slide (&moves[0], num_moves, from, from+11);
-	  push_slide (&moves[0], num_moves, from, from-11);
-	  push_slide (&moves[0], num_moves, from, from+12);
-	  push_slide (&moves[0], num_moves, from, from-12);
-	  push_slide (&moves[0], num_moves, from, from+1);
-	  push_slide (&moves[0], num_moves, from, from-1);
+	  push_slide (&moves[0], num_moves, from, from+13, captures);
+	  push_slide (&moves[0], num_moves, from, from-13, captures);
+	  push_slide (&moves[0], num_moves, from, from+11, captures);
+	  push_slide (&moves[0], num_moves, from, from-11, captures);
+	  push_slide (&moves[0], num_moves, from, from+12, captures);
+	  push_slide (&moves[0], num_moves, from, from-12, captures);
+	  push_slide (&moves[0], num_moves, from, from+1, captures);
+	  push_slide (&moves[0], num_moves, from, from-1, captures);
 	  break;
         case (bking):
 	  /* use the king offsets for 'normal' moves: */
-	  push_king (&moves[0], num_moves, from, from+13, no_castle);
-	  push_king (&moves[0], num_moves, from, from-13, no_castle);
-	  push_king (&moves[0], num_moves, from, from+11, no_castle);
-	  push_king (&moves[0], num_moves, from, from-11, no_castle);
-	  push_king (&moves[0], num_moves, from, from+12, no_castle);
-	  push_king (&moves[0], num_moves, from, from-12, no_castle);
-	  push_king (&moves[0], num_moves, from, from+1, no_castle);
-	  push_king (&moves[0], num_moves, from, from-1, no_castle);
+	  push_king (&moves[0], num_moves, from, from+13, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-13, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from+11, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-11, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from+12, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-12, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from+1, no_castle, captures);
+	  push_king (&moves[0], num_moves, from, from-1, no_castle, captures);
 	  /* castling moves: */
 	  if (from == 114 && !moved[114] && !captures) {
 	    /* kingside: */
 	    if (!moved[117] && board[117] == brook)
 	      if (board[115] == npiece && board[116] == npiece)
-		push_king (&moves[0], num_moves, from, from+2, bck);
+		push_king (&moves[0], num_moves, from, from+2, bck, captures);
 	    /* queenside: */
 	    if (!moved[110] && board[110] == brook)
 	      if (board[111] == npiece && board[112] == npiece
 		  && board[113] == npiece)
-		push_king (&moves[0], num_moves, from, from-2, bcq);
+		push_king (&moves[0], num_moves, from, from-2, bcq, captures);
 	  }
 	  break;
         default:
@@ -706,8 +706,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
 }
 
 
-void push_king (move_s moves[], int *num_moves, int from, int target, 
-		int castle_type) {
+void push_king (move_s moves[], int *num_moves, int from, int target, int castle_type, const bool captures) {
 
   /* add king moves to the moves array */
 
@@ -760,7 +759,7 @@ void push_king (move_s moves[], int *num_moves, int from, int target,
 }
 
 
-void push_knight (move_s moves[], int *num_moves, int from, int target) {
+void push_knight (move_s moves[], int *num_moves, int from, int target, const bool captures) {
 
   /* add knight moves to the moves array */
 
@@ -933,7 +932,7 @@ void push_pawn (move_s moves[], int *num_moves, int from, int target,
 }
 
 
-void push_slide (move_s moves[], int *num_moves, int from, int target) {
+void push_slide (move_s moves[], int *num_moves, int from, int target, const bool captures) {
 
   /* add moves for sliding pieces to the moves array */
 
@@ -951,18 +950,18 @@ void push_slide (move_s moves[], int *num_moves, int from, int target) {
   /* loop until we hit the edge of the board, or another piece: */
   do {
     /* case when the target is an empty square: */
-    if (board[target] == npiece) {
-      if (!captures) {
-	moves[*num_moves].from = from;
-	moves[*num_moves].target = target;
-	moves[*num_moves].captured = npiece;
-	moves[*num_moves].castled = no_castle;
-	moves[*num_moves].promoted = 0;
-	moves[*num_moves].ep = FALSE;
-	(*num_moves)++;
+      if (board[target] == npiece) {
+          if (!captures) {
+              moves[*num_moves].from = from;
+              moves[*num_moves].target = target;
+              moves[*num_moves].captured = npiece;
+              moves[*num_moves].castled = no_castle;
+              moves[*num_moves].promoted = 0;
+              moves[*num_moves].ep = FALSE;
+              (*num_moves)++;
+          }
+          target += offset;
       }
-      target += offset;
-    }
 
     /* case when an enemy piece is hit: */
     else if (board[target]%2 != board[from]%2) {

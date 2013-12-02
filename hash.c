@@ -68,7 +68,7 @@ d_long compute_hash (const int white_to_move, const int ep_square) {
 }
 
 
-void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square) {
+void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures) {
 
     /* try to extract the PV from hash info */
 
@@ -87,7 +87,7 @@ void hash_to_pv (int depth, int white_to_move, int white_castled, int black_cast
     if (hash.x1 == cur_pos.x1 && hash.x2 == cur_pos.x2) {
         move = hash_p->move;
         comp_to_coord (move, str_move);
-        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square)) {
+        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures)) {
             pv[1][i_depth-depth+1] = move;
             pv_length[1] = i_depth-depth+2;
             temp_hash = cur_pos;
@@ -95,7 +95,7 @@ void hash_to_pv (int depth, int white_to_move, int white_castled, int black_cast
             make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
             ply++;
             if (check_legal (&move, 0, white_to_move, wking_loc, bking_loc)) {
-                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square);
+                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
             }
             ply--;
             unmake (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);

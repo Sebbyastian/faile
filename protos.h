@@ -37,20 +37,20 @@ SOFTWARE.
 
 long int allocate_time (void);
 int bioskey (void);
-move_s book_move (const int white_to_move, const int white_castled, const int black_castled, int wking_loc, int bking_loc, int ep_square);
+move_s book_move (const int white_to_move, const int white_castled, const int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
 bool check_legal (move_s moves[], int m, const int white_to_move, const int wking_loc, const int bking_loc);
 long int chk_hash (int alpha, int beta, int depth, int *type, move_s *move);
 void comp_to_coord (move_s move, char str[]);
 d_long compute_hash (const int white_to_move, const int ep_square);
 void display_board (FILE *stream, int color);
-void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square);
+void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
 long int end_eval (const int white_to_move);
 long int eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc);
-void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square);
+void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square, const bool captures);
 void ics_game_end (void);
 bool in_check (const int white_to_move, const int wking_loc, const int bking_loc);
 void init_book (void);
-void init_game (int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square);
+void init_game (int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, bool *captures);
 void init_hash_tables (void);
 void init_hash_values (void);
 bool is_attacked (int square, int color);
@@ -69,20 +69,19 @@ long int mid_eval (const int white_to_move, const int white_castled, const int b
 long int opn_eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc);
 void order_moves (move_s moves[], long int move_ordering[], int num_moves,
 		  move_s *h_move);
-void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square);
+void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
 void parse_cmdline (int argc, char *argv[], int *white_to_move);
 void perft_debug (void);
-move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, const int wking_loc, int bking_loc, int ep_square);
+move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, const int wking_loc, int bking_loc, int ep_square, const bool captures);
 bool possible_move (char *input);
 void post_thinking (long int score);
 void print_move (move_s moves[], int m, FILE *stream);
-void push_king (move_s moves[], int *num_moves, int from, int target,
-		int castle_type);
-void push_knight (move_s moves[], int *num_moves, int from, int target);
+void push_king (move_s moves[], int *num_moves, int from, int target, int castle_type, const bool captures);
+void push_knight (move_s moves[], int *num_moves, int from, int target, const bool captures);
 void push_pawn (move_s moves[], int *num_moves, int from, int target,
 		bool is_ep);
-void push_slide (move_s moves[], int *num_moves, int from, int target);
-long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square);
+void push_slide (move_s moves[], int *num_moves, int from, int target, const bool captures);
+long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
 void rdelay (int time_in_s);
 long int rdifftime (rtime_t end, rtime_t start);
 void refresh_hash (void);
@@ -90,19 +89,19 @@ bool remove_one (int *marker, long int move_ordering[], int num_moves);
 void reset_piece_square (void);
 void rinput (char str[], int n, FILE *stream);
 rtime_t rtime (void);
-long int search (int alpha, int beta, int depth, bool do_null, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square);
-move_s search_root (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square);
+long int search (int alpha, int beta, int depth, bool do_null, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, bool captures);
+move_s search_root (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
 void shut_down (int status);
 void show_counter (long int game_count);
 void start_up (void);
 void store_hash (int alpha, int depth, int score, int flag, move_s move);
-move_s think (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int ep_square);
+move_s think (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int ep_square, const bool captures);
 void toggle_bool (bool *var);
-void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square);
+void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
 void tree_debug (void);
 void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square);
 void u_killers (move_s move, long int score);
-bool verify_coord (char input[], move_s *move, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square);
+bool verify_coord (char input[], move_s *move, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
 piece_t which_piece (char c);
 void xor (d_long *a, d_long b);
 

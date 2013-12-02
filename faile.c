@@ -47,7 +47,7 @@ long int nodes, raw_nodes, qnodes, piece_count, killer_scores[PV_BUFF],
      opp_time, time_cushion, time_for_move, cur_score, start_piece_count,
      last_root_score;
 
-bool xb_mode, captures, searching_pv, post, time_exit, time_failure,
+bool xb_mode, searching_pv, post, time_exit, time_failure,
      allow_more_time, bad_root_score;
 
 move_s pv[PV_BUFF][PV_BUFF], killer1[PV_BUFF], killer2[PV_BUFF],
@@ -73,12 +73,13 @@ int main (int argc, char *argv[]) {
     double nps, elapsed;
     clock_t cpu_start = 0, cpu_end = 0;
     int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square;
+    bool captures;
 
     parse_cmdline (argc, argv, &white_to_move);
     start_up ();
     init_hash_values ();
     init_hash_tables ();
-    init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+    init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures);
     init_book ();
     xb_mode = FALSE;
     force_mode = FALSE;
@@ -99,7 +100,7 @@ int main (int argc, char *argv[]) {
 
             start_time = rtime ();
             cpu_start = clock ();
-            comp_move = think (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square);
+            comp_move = think (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
             cpu_end = clock ();
 
             /* check for a game end: */
@@ -192,9 +193,9 @@ int main (int argc, char *argv[]) {
         }
 
         /* check to see if we have a move.  If it's legal, play it. */
-        if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square))) {
+        if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures))) {
             /* good SAN input style move */
-            move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square);
+            move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
             make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
             reset_piece_square ();
             if (show_board) {
@@ -204,7 +205,7 @@ int main (int argc, char *argv[]) {
         }
         else if (is_move (&input[0])) {
             /* good coordinate style input move */
-            if (verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square)) {
+            if (verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures)) {
                 make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
                 reset_piece_square ();
                 if (show_board) {
@@ -231,11 +232,11 @@ int main (int argc, char *argv[]) {
             else if (!strncmp (input, "perft", 5)) {
                 sscanf (input+6, "%d", &depth);
                 raw_nodes = 0;
-                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square);
+                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
                 printf ("Raw nodes for depth %d: %ld\n", depth, raw_nodes);
             }
             else if (!strcmp (input, "new")) {
-                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures);
                 /* refresh our hash tables: */
                 refresh_hash ();
                 force_mode = FALSE;
@@ -309,7 +310,7 @@ int main (int argc, char *argv[]) {
             }
             else if (!strncmp (input, "result", 6)) {
                 ics_game_end ();
-                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures);
                 force_mode = FALSE;
                 comp_color = 0;
             }
