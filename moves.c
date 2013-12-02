@@ -423,11 +423,10 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
 
   /* rather than writing out from[i].from, from[i].target, etc. all over
      the place, just make a copy of them here: */
-  int ep, from, target, captured, promoted, castled;
+  int ep, from, target, promoted, castled;
   ep = moves[i].ep;
   from = moves[i].from;
   target = moves[i].target;
-  captured = moves[i].captured;
   promoted = moves[i].promoted;
   castled = moves[i].castled;
 

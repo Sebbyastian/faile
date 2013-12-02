@@ -632,7 +632,7 @@ move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int
      source from extract by David Barnes. */
 
   move_s ret_move = dummy, moves[MOVE_BUFF];
-  bool pawn_move = FALSE, castle_k = FALSE, castle_q = FALSE, legal = TRUE,
+  bool pawn_move = FALSE, legal = TRUE,
     prom_move = FALSE;
   int tmp_rank = 0, tmp_col = 0, from_rank = 0, from_col = 0, to_rank = 0,
     to_col = 0, piece_to_move = p_none, prom_piece = npiece, num_matches = 0,
@@ -850,13 +850,11 @@ move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int
 	move++;
       }
       if (is_castle (*move)) {
-	castle_q = TRUE;
 	move++;
 	to_col = 3;
 	to_rank = (white_to_move ? 1 : 8);
       }
       else {
-	castle_k = TRUE;
 	to_col = 7;
 	to_rank = (white_to_move ? 1 : 8);
       }
@@ -940,7 +938,6 @@ unsigned short int search_book (FILE *book) {
 
   unsigned long int target, start = 0, end = 0, index = 0, index_mask = 0;
   b_hash_s b_hash;
-  bool found = FALSE;
 
   /* calculate our target: */
   target = b_hash_mask & cur_pos.x1;
@@ -965,7 +962,6 @@ unsigned short int search_book (FILE *book) {
     fread (&b_hash, sizeof (b_hash_s), 1, book);
     index_mask = b_hash_mask & b_hash.hash.x1;
     if (index_mask == target) {
-      found = TRUE;
       break;
     }
     else if (target < index_mask) {
