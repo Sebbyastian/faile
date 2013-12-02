@@ -38,8 +38,7 @@
 #include "protos.h"
 
 
-void order_moves (move_s moves[], long int move_ordering[], int num_moves,
-        move_s *h_move) {
+void order_moves (move_s moves[], long int move_ordering[], int num_moves, move_s *h_move, int board[]) {
 
     /* sort out move ordering scores in move_ordering, using implemented
 heuristics: */
@@ -142,7 +141,7 @@ heuristics: */
 }
 
 
-void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes) {
+void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board[]) {
 
     move_s moves[MOVE_BUFF];
     int num_moves, i, ep_temp;
@@ -157,22 +156,22 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
     }
 
     /* generate the move list: */
-    gen (&moves[0], &num_moves, white_to_move, ep_square, captures);
+    gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board);
 
     /* loop through the moves at the current depth: */
     for (i = 0; i < num_moves; i++) {
-        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
 
         /* check to see if our move is legal: */
-        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc)) {
+        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             (*raw_nodes)++;
             /* go deeper into the tree recursively, increasing the indent to
                create the "tree" effect: */
-            perft (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes);
+            perft (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes, board);
         }
 
         /* unmake the move to go onto the next: */
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
         cur_pos = temp_hash;
         ep_square = ep_temp;
     }
@@ -180,7 +179,7 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
 }
 
 
-long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures) {
+long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[]) {
 
     /* perform a quiscense search on the current node using alpha-beta with
        negamax search */
@@ -193,7 +192,7 @@ long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_c
 
     /* return our score if we're at a leaf node: */
     if (!depth) {
-        score = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc);
+        score = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board);
         return score;
     }
 
@@ -202,7 +201,7 @@ long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_c
     ep_temp = ep_square;
 
     /* see if our position's score is good enough that we can exit early: */
-    standpat = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc);
+    standpat = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board);
     if (standpat >= beta) {
         return standpat;
     }
@@ -214,29 +213,29 @@ long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_c
     no_moves = TRUE;
 
     /* generate and order moves: */
-    gen (&moves[0], &num_moves, white_to_move, ep_square, captures);
-    order_moves (&moves[0], &move_ordering[0], num_moves, &dummy);
+    gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board);
+    order_moves (&moves[0], &move_ordering[0], num_moves, &dummy, board);
 
     /* loop through the moves at the current node: */
     while (remove_one (&i, &move_ordering[0], num_moves)) {
 
-        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
-        assert (cur_pos.x1 == compute_hash ().x1 &&
-                cur_pos.x2 == compute_hash ().x2);
+        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
+        assert (cur_pos.x1 == compute_hash (board).x1 &&
+                cur_pos.x2 == compute_hash (board).x2);
         ply++;
         legal_move = FALSE;
 
         /* go deeper if it's a legal move: */
-        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc)) {
+        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             nodes++;
             qnodes++;
-            score = -qsearch (-beta, -alpha, depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+            score = -qsearch (-beta, -alpha, depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
             no_moves = FALSE;
             legal_move = TRUE;
         }
 
         ply--;
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
         ep_square = ep_temp;
         cur_pos = temp_hash;
 
@@ -303,7 +302,7 @@ bool remove_one (int *marker, long int move_ordering[], int num_moves) {
 }
 
 
-long int search (int alpha, int beta, int depth, bool do_null, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, bool captures) {
+long int search (int alpha, int beta, int depth, bool do_null, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, bool captures, int board[]) {
 
     /* search the current node using alpha-beta with negamax search */
 
@@ -372,7 +371,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
     i_alpha = alpha;
 
     /* perform check extensions if we haven't gone past maxdepth: */
-    if (in_check (white_to_move, wking_loc, bking_loc)) {
+    if (in_check (white_to_move, wking_loc, bking_loc, board)) {
         if (ply < maxdepth+1) extensions++;
     }
     /* if not in check, look into null moves: */
@@ -397,7 +396,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
 
             ply++;
             ep_square = 0;
-            null_score = -search (-beta, -beta+1, depth-null_red-1, FALSE, white_to_move ^ 1, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+            null_score = -search (-beta, -beta+1, depth-null_red-1, FALSE, white_to_move ^ 1, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
             ep_square = ep_temp;
             ply--;
 
@@ -408,8 +407,8 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
             xor (&cur_pos, color_h_values[1]);
             xor (&cur_pos, ep_h_values[ep_square]);
             xor (&cur_pos, ep_h_values[0]);
-            assert (cur_pos.x1 == compute_hash ().x1 &&
-                    cur_pos.x2 == compute_hash ().x2);
+            assert (cur_pos.x1 == compute_hash (board).x1 &&
+                    cur_pos.x2 == compute_hash (board).x2);
 
             /* check to see if we ran out of time: */
             if (time_exit)
@@ -427,7 +426,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
     /* try to find a stable position before passing the position to eval (): */
     if (!(depth+extensions)) {
         captures = TRUE;
-        score = qsearch (alpha, beta, maxdepth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+        score = qsearch (alpha, beta, maxdepth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
         captures = FALSE;
         return score;
     }
@@ -436,28 +435,28 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
     no_moves = TRUE;
 
     /* generate and order moves: */
-    gen (&moves[0], &num_moves, white_to_move, ep_square, captures);
-    order_moves (&moves[0], &move_ordering[0], num_moves, &h_move);
+    gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board);
+    order_moves (&moves[0], &move_ordering[0], num_moves, &h_move, board);
 
     /* loop through the moves at the current node: */
     while (remove_one (&i, &move_ordering[0], num_moves)) {
 
-        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
-        assert (cur_pos.x1 == compute_hash ().x1 &&
-                cur_pos.x2 == compute_hash ().x2);
+        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
+        assert (cur_pos.x1 == compute_hash (board).x1 &&
+                cur_pos.x2 == compute_hash (board).x2);
         ply++;
         legal_move = FALSE;
 
         /* go deeper if it's a legal move: */
-        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc)) {
+        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             nodes++;
-            score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+            score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
             no_moves = FALSE;
             legal_move = TRUE;
         }
 
         ply--;
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
         ep_square = ep_temp;
         cur_pos = temp_hash;
 
@@ -489,7 +488,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
 
     /* check for mate / stalemate: */
     if (no_moves) {
-        if (in_check (white_to_move, wking_loc, bking_loc)) {
+        if (in_check (white_to_move, wking_loc, bking_loc, board)) {
             alpha = -INF+ply;
         }
         else {
@@ -514,7 +513,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
 }
 
 
-move_s search_root (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures) {
+move_s search_root (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[]) {
 
     /* search the root node using alpha-beta with negamax search */
 
@@ -551,24 +550,24 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
     chk_hash (alpha, beta, depth, &h_type, &h_move);
 
     /* check extensions: */
-    if (in_check (white_to_move, wking_loc, bking_loc)) extensions++;
+    if (in_check (white_to_move, wking_loc, bking_loc, board)) extensions++;
 
     /* generate and order moves: */
-    gen (&moves[0], &num_moves, white_to_move, ep_square, captures);
-    order_moves (&moves[0], &move_ordering[0], num_moves, &h_move);
+    gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board);
+    order_moves (&moves[0], &move_ordering[0], num_moves, &h_move, board);
 
     /* loop through the moves at the root: */
     while (remove_one (&i, &move_ordering[0], num_moves)) {
-        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
-        assert (cur_pos.x1 == compute_hash ().x1 &&
-                cur_pos.x2 == compute_hash ().x2);
+        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
+        assert (cur_pos.x1 == compute_hash (board).x1 &&
+                cur_pos.x2 == compute_hash (board).x2);
         ply++;
         legal_move = FALSE;
 
         /* go deeper if it's a legal move: */
-        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc)) {
+        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             nodes++;
-            root_score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+            root_score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
 
             /* check to see if we've aborted this search before we found a move: */
             if (time_exit && no_moves)
@@ -579,7 +578,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
         }
 
         ply--;
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
         ep_square = ep_temp;
         cur_pos = temp_hash;
 
@@ -623,7 +622,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
 
     /* check to see if we are mated / stalemated: */
     if (no_moves) {
-        if (in_check (white_to_move, wking_loc, bking_loc)) {
+        if (in_check (white_to_move, wking_loc, bking_loc, board)) {
             if (white_to_move == 1) {
                 result = white_is_mated;
             }
@@ -660,7 +659,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
 }
 
 
-move_s think (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int ep_square, const bool captures) {
+move_s think (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int ep_square, const bool captures, int board[]) {
 
     /* Perform iterative deepening to go further in the search */
 
@@ -669,7 +668,7 @@ move_s think (const int white_to_move, const int white_castled, const int black_
     long int elapsed;
 
     /* see if we can get a book move: */
-    comp_move = book_move (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+    comp_move = book_move (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
     if (is_valid_comp (comp_move)) {
         /* print out a pv line indicating a book move: */
         printf ("0 0 0 0 (Book move)\n");
@@ -708,7 +707,7 @@ move_s think (const int white_to_move, const int white_castled, const int black_
             break;
 
         ep_temp = ep_square;
-        temp_move = search_root (-INF, INF, i_depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+        temp_move = search_root (-INF, INF, i_depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
         ep_square = ep_temp;
 
         /* if we haven't aborted our search on time, set the computer's move
@@ -723,7 +722,7 @@ move_s think (const int white_to_move, const int white_castled, const int black_
             if (pv_length[1] <= 2 && i_depth > 1 && abs (cur_score) < (INF-100) &&
                     result != stalemate && result != draw_by_fifty &&
                     result != draw_by_rep)
-            hash_to_pv (i_depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+            hash_to_pv (i_depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
             if (post && i_depth >= mindepth)
                 post_thinking (cur_score);
         }
@@ -749,7 +748,7 @@ move_s think (const int white_to_move, const int white_castled, const int black_
 }
 
 
-void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures) {
+void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[]) {
 
     move_s moves[MOVE_BUFF];
     int num_moves, i, j, ep_temp;
@@ -764,14 +763,14 @@ void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move,
     }
 
     /* generate the move list: */
-    gen (&moves[0], &num_moves, white_to_move, ep_square, captures);
+    gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board);
 
     /* loop through the moves at the current depth: */
     for (i = 0; i < num_moves; i++) {
-        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
 
         /* check to see if our move is legal: */
-        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc)) {
+        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             /* indent and print out our line: */
             for (j = 0; j < indent; j++) {
                 fputc (' ', output);
@@ -781,15 +780,15 @@ void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move,
 
             /* display board if desired: */
             if (disp_b[0] == 'y')
-                display_board (output, 1);
+                display_board (output, 1, board);
 
             /* go deeper into the tree recursively, increasing the indent to
                create the "tree" effect: */
-            tree (depth-1, indent+2, output, disp_b, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+            tree (depth-1, indent+2, output, disp_b, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board);
         }
 
         /* unmake the move to go onto the next: */
-        unmake(&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square);
+        unmake(&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board);
         cur_pos = temp_hash;
         ep_square = ep_temp;
     }
