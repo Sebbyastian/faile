@@ -38,7 +38,7 @@ SOFTWARE.
 #include "rand.h"
 
 
-d_long compute_hash (const int white_to_move, const int ep_square, int board[], int moved[], int pieces[]) {
+d_long compute_hash (const int white_to_move, const int ep_square, int board[], int moved[], int pieces[], const int num_pieces) {
 
   /* compute and return the initial hash value for the position */
 
@@ -68,7 +68,7 @@ d_long compute_hash (const int white_to_move, const int ep_square, int board[], 
 }
 
 
-void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[]) {
+void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces) {
 
     /* try to extract the PV from hash info */
 
@@ -87,7 +87,7 @@ void hash_to_pv (int depth, int white_to_move, int white_castled, int black_cast
     if (hash.x1 == cur_pos.x1 && hash.x2 == cur_pos.x2) {
         move = hash_p->move;
         comp_to_coord (move, str_move);
-        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces)) {
+        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces)) {
             pv[1][i_depth-depth+1] = move;
             pv_length[1] = i_depth-depth+2;
             temp_hash = cur_pos;
@@ -95,7 +95,7 @@ void hash_to_pv (int depth, int white_to_move, int white_castled, int black_cast
             make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces);
             ply++;
             if (check_legal (&move, 0, white_to_move, wking_loc, bking_loc, board)) {
-                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces);
+                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces);
             }
             ply--;
             unmake (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces);

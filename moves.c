@@ -96,7 +96,7 @@ bool check_legal (move_s moves[], int m, const int white_to_move, const int wkin
 }
 
 
-void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square, const bool captures, int board[], int moved[], int pieces[]) {
+void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces) {
 
   /* generate pseudo-legal moves, and place them in the moves array */
 
