@@ -96,7 +96,7 @@ bool check_legal (move_s moves[], int m, const int white_to_move, const int wkin
 }
 
 
-void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square, const bool captures, int board[], int moved[]) {
+void gen (move_s moves[], int *num_moves, const int white_to_move, const int ep_square, const bool captures, int board[], int moved[], int pieces[]) {
 
   /* generate pseudo-legal moves, and place them in the moves array */
 
@@ -417,7 +417,7 @@ bool is_attacked (int square, int color, int board[]) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[]) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[]) {
 
   /* make a move */
 
@@ -984,7 +984,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target, const boo
 }
 
 
-void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[]) {
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[]) {
 
   /* un-make a move */
 

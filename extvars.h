@@ -35,7 +35,7 @@ SOFTWARE.
 extern char divider[50];
 
 extern int result, ply, pv_length[PV_BUFF],
-  history_h[144][144], pieces[33], squares[144], num_pieces, i_depth, fifty,
+  history_h[144][144], squares[144], num_pieces, i_depth, fifty,
   fifty_move[PV_BUFF], game_ply;
 
 extern long int nodes, qnodes, piece_count, killer_scores[PV_BUFF],
