@@ -142,7 +142,7 @@ heuristics: */
 }
 
 
-void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures) {
+void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes) {
 
     move_s moves[MOVE_BUFF];
     int num_moves, i, ep_temp;
@@ -165,10 +165,10 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
 
         /* check to see if our move is legal: */
         if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc)) {
-            raw_nodes++;
+            (*raw_nodes)++;
             /* go deeper into the tree recursively, increasing the indent to
                create the "tree" effect: */
-            perft (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+            perft (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes);
         }
 
         /* unmake the move to go onto the next: */

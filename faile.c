@@ -42,7 +42,7 @@ int board[144], moved[144], result, ply, pv_length[PV_BUFF],
     history_h[144][144], pieces[33], squares[144], num_pieces, i_depth, fifty,
     fifty_move[PV_BUFF], game_ply;
 
-long int nodes, raw_nodes, qnodes, piece_count, killer_scores[PV_BUFF],
+long int nodes, qnodes, piece_count, killer_scores[PV_BUFF],
      killer_scores2[PV_BUFF], moves_to_tc, min_per_game, inc, time_left,
      opp_time, time_cushion, time_for_move, cur_score, start_piece_count,
      last_root_score;
@@ -73,6 +73,7 @@ int main (int argc, char *argv[]) {
     double nps, elapsed;
     clock_t cpu_start = 0, cpu_end = 0;
     int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square;
+    long int raw_nodes;
     bool captures;
 
     parse_cmdline (argc, argv, &white_to_move);
@@ -232,7 +233,7 @@ int main (int argc, char *argv[]) {
             else if (!strncmp (input, "perft", 5)) {
                 sscanf (input+6, "%d", &depth);
                 raw_nodes = 0;
-                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes);
                 printf ("Raw nodes for depth %d: %ld\n", depth, raw_nodes);
             }
             else if (!strcmp (input, "new")) {

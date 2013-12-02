@@ -502,6 +502,7 @@ void perft_debug (void) {
   move_s move;
   int depth;
   int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square;
+  long int raw_nodes;
   bool captures;
 
   init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures);
@@ -516,7 +517,7 @@ void perft_debug (void) {
 
     /* print out the number of raw nodes for this depth: */
     raw_nodes = 0;
-    perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+    perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes);
     printf ("\n\nRaw nodes for depth %d: %ld\n\n", depth, raw_nodes);
 
     /* print out the board: */
@@ -739,6 +740,7 @@ void tree_debug (void) {
   FILE *stream;
   int depth;
   int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square;
+  long int raw_nodes;
   bool captures;
 
   init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures);
@@ -768,7 +770,7 @@ void tree_debug (void) {
 
   /* print out the number of raw nodes for this depth: */
   raw_nodes = 0;
-  perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures);
+  perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes);
   printf ("\n\n%s\nRaw nodes for depth %d: %ld\n%s\n\n", divider,
 	  depth, raw_nodes, divider);
 

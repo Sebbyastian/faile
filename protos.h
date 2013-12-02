@@ -69,7 +69,7 @@ long int mid_eval (const int white_to_move, const int white_castled, const int b
 long int opn_eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc);
 void order_moves (move_s moves[], long int move_ordering[], int num_moves,
 		  move_s *h_move);
-void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures);
+void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes);
 void parse_cmdline (int argc, char *argv[], int *white_to_move);
 void perft_debug (void);
 move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, const int wking_loc, int bking_loc, int ep_square, const bool captures);
