@@ -417,7 +417,7 @@ bool is_attacked (int square, int color, int board[]) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[]) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count) {
 
   /* make a move */
 
@@ -469,7 +469,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     case (wpawn): break;
     case (bpawn): break;
     default:
-      piece_count--;
+      (*piece_count)--;
       break;
   }
 
@@ -984,7 +984,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target, const boo
 }
 
 
-void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[]) {
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count) {
 
   /* un-make a move */
 
@@ -1017,7 +1017,7 @@ void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int 
     case (wpawn): break;
     case (bpawn): break;
     default:
-      piece_count++;
+      (*piece_count)++;
       break;
   }
 

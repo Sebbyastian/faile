@@ -145,7 +145,7 @@ int rev_rank[9] = {
 0,8,7,6,5,4,3,2,1};
 
 
-long int end_eval (const int white_to_move, int board[], int pieces[], const int num_pieces) {
+long int end_eval (const int white_to_move, int board[], int pieces[], const int num_pieces, const long piece_count) {
 
   /* return a score for the current endgame position: */
 
@@ -390,7 +390,7 @@ long int end_eval (const int white_to_move, int board[], int pieces[], const int
 }
 
 
-long int eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int board[], int moved[], int pieces[], const int num_pieces) {
+long int eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int board[], int moved[], int pieces[], const int num_pieces, const long piece_count) {
 
   /* select the appropriate eval() routine: */
 
@@ -398,16 +398,16 @@ long int eval (const int white_to_move, const int white_castled, const int black
     return (opn_eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board, moved, pieces, num_pieces));
   }
   else if (piece_count < 5) {
-    return (end_eval (white_to_move, board, pieces, num_pieces));
+    return (end_eval (white_to_move, board, pieces, num_pieces, piece_count));
   }
   else {
-    return (mid_eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board, moved, pieces, num_pieces));
+    return (mid_eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board, moved, pieces, num_pieces, piece_count));
   }
 
 }
 
 
-long int mid_eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int board[], int moved[], int pieces[], const int num_pieces) {
+long int mid_eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int board[], int moved[], int pieces[], const int num_pieces, const long piece_count) {
 
   /* return a score for the current middlegame position: */
 

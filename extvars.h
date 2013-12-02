@@ -38,7 +38,7 @@ extern int result, ply, pv_length[PV_BUFF],
   history_h[144][144], squares[144], i_depth, fifty,
   fifty_move[PV_BUFF], game_ply;
 
-extern long int nodes, qnodes, piece_count, killer_scores[PV_BUFF],
+extern long nodes, qnodes, killer_scores[PV_BUFF],
   killer_scores2[PV_BUFF], moves_to_tc, min_per_game, inc, time_left,
   opp_time, time_cushion, time_for_move, cur_score, start_piece_count,
   last_root_score;
