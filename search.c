@@ -179,7 +179,7 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
 }
 
 
-long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count) {
+long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, const long start_piece_count) {
 
     /* perform a quiscense search on the current node using alpha-beta with
        negamax search */
@@ -192,7 +192,7 @@ long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_c
 
     /* return our score if we're at a leaf node: */
     if (!depth) {
-        score = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board, moved, pieces, num_pieces, piece_count);
+        score = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board, moved, pieces, num_pieces, piece_count, start_piece_count);
         return score;
     }
 
@@ -201,7 +201,7 @@ long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_c
     ep_temp = ep_square;
 
     /* see if our position's score is good enough that we can exit early: */
-    standpat = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board, moved, pieces, num_pieces, piece_count);
+    standpat = eval (white_to_move, white_castled, black_castled, wking_loc, bking_loc, board, moved, pieces, num_pieces, piece_count, start_piece_count);
     if (standpat >= beta) {
         return standpat;
     }
@@ -228,7 +228,7 @@ long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_c
         if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             nodes++;
             qnodes++;
-            score = -qsearch (-beta, -alpha, depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count);
+            score = -qsearch (-beta, -alpha, depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, start_piece_count);
             no_moves = FALSE;
             legal_move = TRUE;
         }
@@ -301,7 +301,7 @@ bool remove_one (int *marker, long int move_ordering[], int num_moves) {
 }
 
 
-long int search (int alpha, int beta, int depth, bool do_null, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count) {
+long int search (int alpha, int beta, int depth, bool do_null, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, const long start_piece_count) {
 
     /* search the current node using alpha-beta with negamax search */
 
@@ -395,7 +395,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
 
             ply++;
             ep_square = 0;
-            null_score = -search (-beta, -beta+1, depth-null_red-1, FALSE, white_to_move ^ 1, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count);
+            null_score = -search (-beta, -beta+1, depth-null_red-1, FALSE, white_to_move ^ 1, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, start_piece_count);
             ep_square = ep_temp;
             ply--;
 
@@ -424,7 +424,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
     /* try to find a stable position before passing the position to eval (): */
     if (!(depth+extensions)) {
         captures = TRUE;
-        score = qsearch (alpha, beta, maxdepth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count);
+        score = qsearch (alpha, beta, maxdepth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, start_piece_count);
         captures = FALSE;
         return score;
     }
@@ -447,7 +447,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
         /* go deeper if it's a legal move: */
         if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             nodes++;
-            score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count);
+            score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, start_piece_count);
             no_moves = FALSE;
             legal_move = TRUE;
         }
@@ -516,7 +516,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
 
     move_s moves[MOVE_BUFF], best_move = dummy, h_move;
     int num_moves, i, j, ep_temp, extensions = 0, h_type;
-    long int root_score = -INF, move_ordering[MOVE_BUFF], i_alpha = -INF;
+    long root_score = -INF, move_ordering[MOVE_BUFF], i_alpha = -INF, start_piece_count;
     bool no_moves, legal_move;
     d_long temp_hash;
 
@@ -563,7 +563,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
         /* go deeper if it's a legal move: */
         if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
             nodes++;
-            root_score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count);
+            root_score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, start_piece_count);
 
             /* check to see if we've aborted this search before we found a move: */
             if (time_exit && no_moves)

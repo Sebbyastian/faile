@@ -40,7 +40,7 @@ extern int result, ply, pv_length[PV_BUFF],
 
 extern long nodes, qnodes, killer_scores[PV_BUFF],
   killer_scores2[PV_BUFF], moves_to_tc, min_per_game, inc, time_left,
-  opp_time, time_cushion, time_for_move, cur_score, start_piece_count,
+  opp_time, time_cushion, time_for_move, cur_score,
   last_root_score;
 
 extern bool xb_mode, searching_pv, post, time_exit, time_failure,
