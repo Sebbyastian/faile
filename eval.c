@@ -33,7 +33,6 @@ SOFTWARE.
  **************************************************/
 
 #include "faile.h"
-#include "extvars.h"
 #include "protos.h"
 
 
