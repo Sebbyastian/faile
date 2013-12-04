@@ -68,7 +68,7 @@ d_long compute_hash (const int white_to_move, const int ep_square, int board[], 
 }
 
 
-void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty) {
+void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[]) {
 
     /* try to extract the PV from hash info */
 
@@ -87,18 +87,18 @@ void hash_to_pv (int depth, int white_to_move, int white_castled, int black_cast
     if (hash.x1 == cur_pos.x1 && hash.x2 == cur_pos.x2) {
         move = hash_p->move;
         comp_to_coord (move, str_move);
-        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty)) {
+        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move)) {
             pv[1][i_depth-depth+1] = move;
             pv_length[1] = i_depth-depth+2;
             temp_hash = cur_pos;
             ep_temp = ep_square;
-            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty);
+            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move);
             ply++;
             if (check_legal (&move, 0, white_to_move, wking_loc, bking_loc, board)) {
-                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty);
+                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move);
             }
             ply--;
-            unmake (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty);
+            unmake (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move);
             ep_square = ep_temp;
             cur_pos = temp_hash;
         }
