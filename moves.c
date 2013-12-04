@@ -417,7 +417,7 @@ bool is_attacked (int square, int color, int board[]) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty, int fifty_move[], int squares[], int ply) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty, int fifty_move[], int squares[], int ply, d_long *cur_pos) {
 
   /* make a move */
 
@@ -431,16 +431,16 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   castled = moves[i].castled;
 
   /* store the 3 rep info and "game_ply" before we change the hash: */
-  rep_history[(*game_ply)++] = cur_pos;
+  rep_history[(*game_ply)++] = *cur_pos;
 
   /* make "common" changes to the hash (assume normal move, make corrections
      for ep, promotion, etc in appropriate section): */
-  xor (&cur_pos, h_values[board[from]][from]);
-  xor (&cur_pos, h_values[board[target]][target]);
-  xor (&cur_pos, h_values[board[from]][target]);
-  xor (&cur_pos, ep_h_values[*ep_square]);
-  xor (&cur_pos, color_h_values[0]);
-  xor (&cur_pos, color_h_values[1]);
+  xor (cur_pos, h_values[board[from]][from]);
+  xor (cur_pos, h_values[board[target]][target]);
+  xor (cur_pos, h_values[board[from]][target]);
+  xor (cur_pos, ep_h_values[*ep_square]);
+  xor (cur_pos, color_h_values[0]);
+  xor (cur_pos, color_h_values[1]);
 
   /* clear the en passant rights: */
   *ep_square = 0;
@@ -477,8 +477,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   if (board[from] == wpawn) {
     /* look for a promotion move: */
     if (promoted) {
-      xor (&cur_pos, h_values[board[from]][target]);
-      xor (&cur_pos, h_values[promoted][target]);
+      xor (cur_pos, h_values[board[from]][target]);
+      xor (cur_pos, h_values[promoted][target]);
       board[target] = promoted;
       board[from] = npiece;
       moved[target]++;
@@ -489,7 +489,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
 
     /* look for an en passant move: */
     if (ep) {
-      xor (&cur_pos, h_values[bpawn][target-12]);
+      xor (cur_pos, h_values[bpawn][target-12]);
       board[target] = wpawn;
       board[from] = npiece;
       board[target-12] = npiece;
@@ -507,7 +507,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     /* first check to see if we've moved a pawn up 2 squares: */
     if (target == from+24) {
       *ep_square = from+12;
-      xor (&cur_pos, ep_h_values[*ep_square]);
+      xor (cur_pos, ep_h_values[*ep_square]);
     }
 
     board[target] = wpawn;
@@ -523,8 +523,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   if (board[from] == bpawn) {
     /* look for a promotion move: */
     if (promoted) {
-      xor (&cur_pos, h_values[board[from]][target]);
-      xor (&cur_pos, h_values[promoted][target]);
+      xor (cur_pos, h_values[board[from]][target]);
+      xor (cur_pos, h_values[promoted][target]);
       board[target] = promoted;
       board[from] = npiece;
       moved[target]++;
@@ -535,7 +535,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
 
     /* look for an en passant move: */
     if (ep) {
-      xor (&cur_pos, h_values[wpawn][target+12]);
+      xor (cur_pos, h_values[wpawn][target+12]);
       board[target] = bpawn;
       board[from] = npiece;
       board[target+12] = npiece;
@@ -553,7 +553,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     /* first check to see if we've moved a pawn down 2 squares: */
     if (target == from-24) {
       *ep_square = from-12;
-      xor (&cur_pos, ep_h_values[*ep_square]);
+      xor (cur_pos, ep_h_values[*ep_square]);
     }
 
     board[target] = bpawn;
@@ -571,20 +571,20 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
 
     /* update castling hash status: */
     if (!moved[30] && board[from] == wrook) {
-      xor (&cur_pos, wck_h_values[!moved[33]]);
-      xor (&cur_pos, wcq_h_values[!moved[26]]);
+      xor (cur_pos, wck_h_values[!moved[33]]);
+      xor (cur_pos, wcq_h_values[!moved[26]]);
       moved[target]++;
       moved[from]++;
-      xor (&cur_pos, wck_h_values[!moved[33]]);
-      xor (&cur_pos, wcq_h_values[!moved[26]]);
+      xor (cur_pos, wck_h_values[!moved[33]]);
+      xor (cur_pos, wcq_h_values[!moved[26]]);
     }
     else if (!moved[114] && board[from] == brook) {
-      xor (&cur_pos, bck_h_values[!moved[117]]);
-      xor (&cur_pos, bcq_h_values[!moved[110]]);
+      xor (cur_pos, bck_h_values[!moved[117]]);
+      xor (cur_pos, bcq_h_values[!moved[110]]);
       moved[target]++;
       moved[from]++;
-      xor (&cur_pos, bck_h_values[!moved[117]]);
-      xor (&cur_pos, bcq_h_values[!moved[110]]);
+      xor (cur_pos, bck_h_values[!moved[117]]);
+      xor (cur_pos, bcq_h_values[!moved[110]]);
     }
     else {
       moved[target]++;
@@ -599,10 +599,10 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   if (board[from] == wking) {
     /* update hashing for castling: */
     if (!moved[30]) {
-      xor (&cur_pos, wck_h_values[!moved[33]]);
-      xor (&cur_pos, wcq_h_values[!moved[26]]);
-      xor (&cur_pos, wck_h_values[0]);
-      xor (&cur_pos, wcq_h_values[0]);
+      xor (cur_pos, wck_h_values[!moved[33]]);
+      xor (cur_pos, wcq_h_values[!moved[26]]);
+      xor (cur_pos, wck_h_values[0]);
+      xor (cur_pos, wcq_h_values[0]);
     }
 
     /* record the new white king location: */
@@ -618,8 +618,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     /* check for castling: */
     /* check for white kingside castling: */
     if (castled == wck) {
-      xor (&cur_pos, h_values[wrook][33]);
-      xor (&cur_pos, h_values[wrook][31]);
+      xor (cur_pos, h_values[wrook][33]);
+      xor (cur_pos, h_values[wrook][31]);
       board[33] = npiece;
       board[31] = wrook;
       moved[33]++;
@@ -633,8 +633,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
 
     /* check for white queenside castling: */
     else if (castled == wcq) {
-      xor (&cur_pos, h_values[wrook][26]);
-      xor (&cur_pos, h_values[wrook][29]);
+      xor (cur_pos, h_values[wrook][26]);
+      xor (cur_pos, h_values[wrook][29]);
       board[26] = npiece;
       board[29] = wrook;
       moved[26]++;
@@ -653,10 +653,10 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   else {
     /* update hashing for castling: */
     if (!moved[114]) {
-      xor (&cur_pos, bck_h_values[!moved[117]]);
-      xor (&cur_pos, bcq_h_values[!moved[110]]);
-      xor (&cur_pos, bck_h_values[0]);
-      xor (&cur_pos, bcq_h_values[0]);
+      xor (cur_pos, bck_h_values[!moved[117]]);
+      xor (cur_pos, bcq_h_values[!moved[110]]);
+      xor (cur_pos, bck_h_values[0]);
+      xor (cur_pos, bcq_h_values[0]);
     }
 
     /* record the new black king location: */
@@ -672,8 +672,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
     /* check for castling: */
     /* check for black kingside castling: */
     if (castled == bck) {
-      xor (&cur_pos, h_values[brook][117]);
-      xor (&cur_pos, h_values[brook][115]);
+      xor (cur_pos, h_values[brook][117]);
+      xor (cur_pos, h_values[brook][115]);
       board[117] = npiece;
       board[115] = brook;
       moved[117]++;
@@ -687,8 +687,8 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
 
     /* check for black queenside castling: */
     else if (castled == bcq) {
-      xor (&cur_pos, h_values[brook][110]);
-      xor (&cur_pos, h_values[brook][113]);
+      xor (cur_pos, h_values[brook][110]);
+      xor (cur_pos, h_values[brook][113]);
       board[110] = npiece;
       board[113] = brook;
       moved[110]++;

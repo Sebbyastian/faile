@@ -68,7 +68,7 @@ d_long compute_hash (const int white_to_move, const int ep_square, int board[], 
 }
 
 
-void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply) {
+void hash_to_pv (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos) {
 
     /* try to extract the PV from hash info */
 
@@ -87,15 +87,15 @@ void hash_to_pv (int depth, int white_to_move, int white_castled, int black_cast
     if (hash.x1 == cur_pos.x1 && hash.x2 == cur_pos.x2) {
         move = hash_p->move;
         comp_to_coord (move, str_move);
-        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply)) {
+        if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos)) {
             pv[1][i_depth-depth+1] = move;
             pv_length[1] = i_depth-depth+2;
             temp_hash = cur_pos;
             ep_temp = ep_square;
-            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos);
             ply++;
             if (check_legal (&move, 0, white_to_move, wking_loc, bking_loc, board)) {
-                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply);
+                hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos);
             }
             ply--;
             unmake (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
@@ -193,7 +193,7 @@ void init_hash_values (void) {
 }
 
 
-long int chk_hash (int alpha, int beta, int depth, int *type, move_s *move, int ply) {
+long int chk_hash (int alpha, int beta, int depth, int *type, move_s *move, int ply, d_long cur_pos) {
 
   /* see what info we can get from our hash tables for the current
      position.  This could be a value we can return, a suggested move, or
@@ -271,7 +271,7 @@ void refresh_hash (void) {
 }
 
 
-void store_hash (int alpha, int depth, int score, int flag, move_s move, int ply) {
+void store_hash (int alpha, int depth, int score, int flag, move_s move, int ply, d_long cur_pos) {
 
   /* store a position into the hash table: */
 
