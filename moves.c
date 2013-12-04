@@ -417,7 +417,7 @@ bool is_attacked (int square, int color, int board[]) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[]) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty) {
 
   /* make a move */
 
@@ -431,7 +431,7 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   castled = moves[i].castled;
 
   /* store the 3 rep info and "game_ply" before we change the hash: */
-  rep_history[game_ply++] = cur_pos;
+  rep_history[(*game_ply)++] = cur_pos;
 
   /* make "common" changes to the hash (assume normal move, make corrections
      for ep, promotion, etc in appropriate section): */
@@ -446,13 +446,13 @@ void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *b
   *ep_square = 0;
 
   /* update the 50 move info: */
-  fifty_move[ply] = fifty;
+  fifty_move[ply] = *fifty;
   if (board[from] == wpawn || board[from] == bpawn ||
       board[target] != npiece) {
-    fifty = 0;
+    *fifty = 0;
   }
   else {
-    fifty++;
+    (*fifty)++;
   }
 
   /* update the "general" pieces[] / squares[] info (special moves need
@@ -984,7 +984,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target, const boo
 }
 
 
-void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[]) {
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty) {
 
   /* un-make a move */
 
@@ -999,10 +999,10 @@ void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int 
   castled = moves[i].castled;
 
   /* update the "game_ply" : */
-  game_ply--;
+  (*game_ply)--;
 
   /* update the 50 move info: */
-  fifty = fifty_move[ply];
+  *fifty = fifty_move[ply];
 
   /* update the "general" pieces[] / squares[] info (special moves need
      special handling later): */
