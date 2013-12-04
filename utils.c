@@ -285,7 +285,7 @@ void ics_game_end (void) {
 }
 
 
-void init_game (int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, bool *captures, int board[], int moved[], int pieces[], int *num_pieces, long *piece_count, d_long rep_history[], int *game_ply, int *fifty) {
+void init_game (int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, bool *captures, int board[], int moved[], int pieces[], int *num_pieces, long *piece_count, d_long rep_history[], int *game_ply, int *fifty, int squares[]) {
 
   /* set up a new game: */
 
@@ -331,7 +331,7 @@ void init_game (int *white_to_move, int *white_castled, int *black_castled, int 
   min_per_game = 10;
   time_cushion = 0;
 
-  reset_piece_square (board, pieces, num_pieces);
+  reset_piece_square (board, pieces, num_pieces, squares);
 
   /* compute the initial hash: */
   srand (173);
@@ -500,12 +500,12 @@ void perft_debug (void) {
   char input[STR_BUFF], *p;
   move_s move;
   int depth;
-  int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces, game_ply, fifty, fifty_move[PV_BUFF];
+  int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces, game_ply, fifty, fifty_move[PV_BUFF], squares[144];
   long raw_nodes, piece_count;
   bool captures;
   d_long rep_history[PV_BUFF];
 
-  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty);
+  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty, squares);
 
   /* go into a loop of doing a perft(), then making the moves the user inputs
      until the user enters "exit" or "quit" */
@@ -517,7 +517,7 @@ void perft_debug (void) {
 
     /* print out the number of raw nodes for this depth: */
     raw_nodes = 0;
-    perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move);
+    perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares);
     printf ("\n\nRaw nodes for depth %d: %ld\n\n", depth, raw_nodes);
 
     /* print out the board: */
@@ -532,7 +532,7 @@ void perft_debug (void) {
       exit (EXIT_SUCCESS);
     }
 
-    if (!verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move)) {
+    if (!verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares)) {
       /* loop until we get a legal move or an exit/quit: */
       do {
 	printf ("\nIllegal move/command!  Please input a new move/command:\n");
@@ -543,10 +543,10 @@ void perft_debug (void) {
 	if (!strcmp (input, "exit") || !strcmp (input, "quit")) {
 	  exit (EXIT_SUCCESS);
 	}
-      } while (!verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move));
+      } while (!verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares));
     }
 
-    make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move);
+    make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares);
   }
 }
 
@@ -633,7 +633,7 @@ long int rdifftime (rtime_t end, rtime_t start) {
 }
 
 
-void reset_piece_square (int board[], int pieces[], int *num_pieces) {
+void reset_piece_square (int board[], int pieces[], int *num_pieces, int squares[]) {
 
   /* reset the pieces[] / squares[] arrays */
 
@@ -739,12 +739,12 @@ void tree_debug (void) {
   char input[STR_BUFF];
   FILE *stream;
   int depth;
-  int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces, game_ply, fifty, fifty_move[PV_BUFF];
+  int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces, game_ply, fifty, fifty_move[PV_BUFF], squares[144];
   long raw_nodes, piece_count;
   bool captures;
   d_long rep_history[PV_BUFF];
 
-  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty);
+  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty, squares);
 
   /* get the desired depth to generate to: */
   printf ("\nPlease enter the desired depth:\n");
@@ -766,19 +766,19 @@ void tree_debug (void) {
     printf ("\nDo you want to output diagrams? (y/n)\n");
     rinput (input, STR_BUFF, stdin);
 
-    tree (depth, 0, stream, input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move);
+    tree (depth, 0, stream, input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares);
   }
 
   /* print out the number of raw nodes for this depth: */
   raw_nodes = 0;
-  perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move);
+  perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares);
   printf ("\n\n%s\nRaw nodes for depth %d: %ld\n%s\n\n", divider,
 	  depth, raw_nodes, divider);
 
 }
 
 
-bool verify_coord (char input[], move_s *move, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[]) {
+bool verify_coord (char input[], move_s *move, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[]) {
 
   /* checks to see if the move the user entered was legal or not, returns
      true if the move was legal, and stores the legal move inside move */
@@ -798,12 +798,12 @@ bool verify_coord (char input[], move_s *move, int white_to_move, int white_cast
   for (i = 0; i < num_moves; i++) {
       comp_to_coord (moves[i], comp_move);
       if (!strcmp (input, comp_move)) {
-          make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move);
+          make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares);
           if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
               legal = TRUE;
               *move = moves[i];
           }
-          unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move);
+          unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares);
           ep_square = ep_temp;
           cur_pos = temp_hash;
       }

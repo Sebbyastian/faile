@@ -34,8 +34,7 @@ SOFTWARE.
 
 extern char divider[50];
 
-extern int result, ply, pv_length[PV_BUFF],
-  history_h[144][144], squares[144], i_depth;
+extern int result, ply, pv_length[PV_BUFF], history_h[144][144], i_depth;
 
 extern long nodes, qnodes, killer_scores[PV_BUFF],
   killer_scores2[PV_BUFF], moves_to_tc, min_per_game, inc, time_left,
