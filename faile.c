@@ -55,8 +55,7 @@ move_s pv[PV_BUFF][PV_BUFF], killer1[PV_BUFF], killer2[PV_BUFF],
 rtime_t start_time;
 
 d_long h_values[14][144], ep_h_values[144], wck_h_values[2], wcq_h_values[2],
-       bck_h_values[2], bcq_h_values[2], color_h_values[2], cur_pos,
-       rep_history[PV_BUFF];
+       bck_h_values[2], bcq_h_values[2], color_h_values[2], cur_pos;
 
 hash_s *hash_table;
 
@@ -74,12 +73,13 @@ int main (int argc, char *argv[]) {
     int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces;
     long raw_nodes, piece_count;
     bool captures;
+    d_long rep_history[PV_BUFF];
 
     parse_cmdline (argc, argv, &white_to_move, board);
     start_up ();
     init_hash_values ();
     init_hash_tables ();
-    init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count);
+    init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history);
     init_book ();
     xb_mode = FALSE;
     force_mode = FALSE;
@@ -100,7 +100,7 @@ int main (int argc, char *argv[]) {
 
             start_time = rtime ();
             cpu_start = clock ();
-            comp_move = think (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count);
+            comp_move = think (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history);
             cpu_end = clock ();
 
             /* check for a game end: */
@@ -111,10 +111,10 @@ int main (int argc, char *argv[]) {
 
                 comp_to_coord (comp_move, output);
 
-                make (&comp_move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count);
+                make (&comp_move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history);
 
                 /* check to see if we draw by rep/fifty after our move: */
-                if (is_draw ()) {
+                if (is_draw (rep_history)) {
                     result = draw_by_rep;
                 }
                 else if (fifty > 100) {
@@ -193,10 +193,10 @@ int main (int argc, char *argv[]) {
         }
 
         /* check to see if we have a move.  If it's legal, play it. */
-        if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count))) {
+        if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history))) {
             /* good SAN input style move */
-            move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count);
-            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count);
+            move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history);
+            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history);
             reset_piece_square (board, pieces, &num_pieces);
             if (show_board) {
                 printf ("\n");
@@ -205,8 +205,8 @@ int main (int argc, char *argv[]) {
         }
         else if (is_move (&input[0])) {
             /* good coordinate style input move */
-            if (verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count)) {
-                make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count);
+            if (verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history)) {
+                make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history);
                 reset_piece_square (board, pieces, &num_pieces);
                 if (show_board) {
                     printf ("\n");
@@ -232,11 +232,11 @@ int main (int argc, char *argv[]) {
             else if (!strncmp (input, "perft", 5)) {
                 sscanf (input+6, "%d", &depth);
                 raw_nodes = 0;
-                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count);
+                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history);
                 printf ("Raw nodes for depth %d: %ld\n", depth, raw_nodes);
             }
             else if (!strcmp (input, "new")) {
-                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count);
+                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history);
                 /* refresh our hash tables: */
                 refresh_hash ();
                 force_mode = FALSE;
@@ -310,7 +310,7 @@ int main (int argc, char *argv[]) {
             }
             else if (!strncmp (input, "result", 6)) {
                 ics_game_end ();
-                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count);
+                init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history);
                 force_mode = FALSE;
                 comp_color = 0;
             }
