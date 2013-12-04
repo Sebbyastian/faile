@@ -38,7 +38,7 @@
 char divider[50] = "-------------------------------------------------";
 move_s dummy = {0,0,0,0,0,0,0};
 
-int result, ply, pv_length[PV_BUFF], history_h[144][144], i_depth;
+int result, pv_length[PV_BUFF], history_h[144][144], i_depth;
 
 long nodes, qnodes, killer_scores[PV_BUFF],
      killer_scores2[PV_BUFF], moves_to_tc, min_per_game, inc, time_left,
@@ -69,7 +69,7 @@ int main (int argc, char *argv[]) {
     bool force_mode, show_board;
     double nps, elapsed;
     clock_t cpu_start = 0, cpu_end = 0;
-    int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces, fifty, game_ply, fifty_move[PV_BUFF], squares[144];
+    int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces, fifty, game_ply, fifty_move[PV_BUFF], squares[144], ply;
     long raw_nodes, piece_count;
     bool captures;
     d_long rep_history[PV_BUFF];
@@ -99,7 +99,7 @@ int main (int argc, char *argv[]) {
 
             start_time = rtime ();
             cpu_start = clock ();
-            comp_move = think (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares);
+            comp_move = think (white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply);
             cpu_end = clock ();
 
             /* check for a game end: */
@@ -110,10 +110,10 @@ int main (int argc, char *argv[]) {
 
                 comp_to_coord (comp_move, output);
 
-                make (&comp_move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares);
+                make (&comp_move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
 
                 /* check to see if we draw by rep/fifty after our move: */
-                if (is_draw (rep_history, game_ply, fifty)) {
+                if (is_draw (rep_history, game_ply, fifty, ply)) {
                     result = draw_by_rep;
                 }
                 else if (fifty > 100) {
@@ -192,10 +192,10 @@ int main (int argc, char *argv[]) {
         }
 
         /* check to see if we have a move.  If it's legal, play it. */
-        if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares))) {
+        if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply))) {
             /* good SAN input style move */
-            move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares);
-            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares);
+            move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply);
+            make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
             reset_piece_square (board, pieces, &num_pieces, squares);
             if (show_board) {
                 printf ("\n");
@@ -204,8 +204,8 @@ int main (int argc, char *argv[]) {
         }
         else if (is_move (&input[0])) {
             /* good coordinate style input move */
-            if (verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares)) {
-                make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares);
+            if (verify_coord (input, &move, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply)) {
+                make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
                 reset_piece_square (board, pieces, &num_pieces, squares);
                 if (show_board) {
                     printf ("\n");
@@ -231,7 +231,7 @@ int main (int argc, char *argv[]) {
             else if (!strncmp (input, "perft", 5)) {
                 sscanf (input+6, "%d", &depth);
                 raw_nodes = 0;
-                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares);
+                perft (depth, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply);
                 printf ("Raw nodes for depth %d: %ld\n", depth, raw_nodes);
             }
             else if (!strcmp (input, "new")) {
