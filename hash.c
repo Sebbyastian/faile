@@ -98,7 +98,7 @@ void hash_to_pv (int depth, int white_to_move, int white_castled, int black_cast
                 hash_to_pv (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
             }
             ply--;
-            unmake (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+            unmake (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
             ep_square = ep_temp;
             cur_pos = temp_hash;
         }
@@ -271,7 +271,7 @@ void refresh_hash (void) {
 }
 
 
-void store_hash (int alpha, int depth, int score, int flag, move_s move, int ply, d_long cur_pos) {
+void store_hash (int depth, int score, int flag, move_s move, int ply, d_long cur_pos) {
 
   /* store a position into the hash table: */
 

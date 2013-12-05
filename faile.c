@@ -71,7 +71,7 @@ int main (int argc, char *argv[]) {
     bool captures;
     d_long rep_history[PV_BUFF], cur_pos, wck_h_values[2], wcq_h_values[2], bck_h_values[2], bcq_h_values[2], h_values[14][144], ep_h_values[144], color_h_values[2];
 
-    parse_cmdline (argc, argv, &white_to_move, board);
+    parse_cmdline (argc, argv);
     start_up ();
     init_hash_values (wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
     init_hash_tables ();

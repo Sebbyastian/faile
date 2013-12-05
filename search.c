@@ -171,7 +171,7 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
         }
 
         /* unmake the move to go onto the next: */
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
         cur_pos = temp_hash;
         ep_square = ep_temp;
     }
@@ -234,7 +234,7 @@ long int qsearch (int alpha, int beta, int depth, int white_to_move, int white_c
         }
 
         ply--;
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
         ep_square = ep_temp;
         cur_pos = temp_hash;
 
@@ -453,7 +453,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
         }
 
         ply--;
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
         ep_square = ep_temp;
         cur_pos = temp_hash;
 
@@ -469,7 +469,7 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
             /* try for an early cutoff: */
             if (score >= beta) {
                 u_killers (moves[i], score, ply);
-                store_hash (i_alpha, depth, score, l_bound, moves[i], ply, cur_pos);
+                store_hash (depth, score, l_bound, moves[i], ply, cur_pos);
                 return beta;
             }
             alpha = score;
@@ -501,9 +501,9 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
 
     /* store our hash info: */
     if (alpha > i_alpha)
-        store_hash (i_alpha, depth, alpha, exact, pv[ply][ply], ply, cur_pos);
+        store_hash (depth, alpha, exact, pv[ply][ply], ply, cur_pos);
     else
-        store_hash (i_alpha, depth, alpha, u_bound, dummy, ply, cur_pos);
+        store_hash (depth, alpha, u_bound, dummy, ply, cur_pos);
 
     return alpha;
 
@@ -516,7 +516,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
 
     move_s moves[MOVE_BUFF], best_move = dummy, h_move;
     int num_moves, i, j, ep_temp, extensions = 0, h_type;
-    long root_score = -INF, move_ordering[MOVE_BUFF], i_alpha = -INF, start_piece_count;
+    long root_score = -INF, move_ordering[MOVE_BUFF], start_piece_count;
     bool no_moves, legal_move;
     d_long temp_hash;
 
@@ -574,7 +574,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
         }
 
         ply--;
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
         ep_square = ep_temp;
         cur_pos = temp_hash;
 
@@ -600,7 +600,7 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
             }
 
             /* update the hash tables: */
-            store_hash (i_alpha, depth, alpha, exact, best_move, ply, cur_pos);
+            store_hash (depth, alpha, exact, best_move, ply, cur_pos);
 
             /* update the pv: */
             pv[ply][ply] = moves[i];
@@ -784,7 +784,7 @@ void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move,
         }
 
         /* unmake the move to go onto the next: */
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
         cur_pos = temp_hash;
         ep_square = ep_temp;
     }

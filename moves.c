@@ -984,7 +984,7 @@ void push_slide (move_s moves[], int *num_moves, int from, int target, const boo
 }
 
 
-void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty, int fifty_move[], int squares[], int ply) {
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int board[], int moved[], int pieces[], long *piece_count, int *game_ply, int *fifty, int fifty_move[], int squares[], int ply) {
 
   /* un-make a move */
 

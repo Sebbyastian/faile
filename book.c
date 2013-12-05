@@ -165,7 +165,7 @@ move_s book_move (int white_to_move, int white_castled, int black_castled, int w
     }
 
     ply--;
-    unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+    unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
     ep_square = ep_temp;
     cur_pos = temp_hash;
   }
@@ -915,7 +915,7 @@ move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int
 	  num_matches++;
 	}
 	ply--;
-	unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+	unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
 	ep_square = ep_temp;
 	cur_pos = temp_hash;
       }
@@ -938,7 +938,8 @@ unsigned short int search_book (FILE *book, d_long cur_pos) {
   /* search through the opening book, and see if we can find the position
      in question, and return the frequency for the position */
 
-  unsigned long int target, start = 0, end = 0, index = 0, index_mask = 0;
+  unsigned long int target, start = 0, end = 0, index_mask = 0;
+  long index = 0;
   b_hash_s b_hash;
 
   /* calculate our target: */
@@ -995,7 +996,7 @@ unsigned short int search_book (FILE *book, d_long cur_pos) {
     /* try right: */
     index = start + 1;
     index_mask = target;
-    while (index <= b_hash_mask && index_mask == target) {
+    while (index <= (long) b_hash_mask && index_mask == target) {
       fseek (book, index * sizeof (b_hash_s), SEEK_SET);
       fread (&b_hash, sizeof (b_hash_s), 1, book);
       index_mask = b_hash_mask & b_hash.hash.x1;

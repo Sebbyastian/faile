@@ -69,7 +69,7 @@ long int mid_eval (const int white_to_move, const int white_castled, const int b
 long int opn_eval (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int board[], int moved[], int pieces[], const int num_pieces);
 void order_moves (move_s moves[], long int move_ordering[], int num_moves, move_s *h_move, int board[], int ply);
 void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board[], int moved[], int perft[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]);
-void parse_cmdline (int argc, char *argv[], int *white_to_move, int board[]);
+void parse_cmdline (int argc, char *argv[]);
 void perft_debug (void);
 move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, const int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]);
 bool possible_move (char *input);
@@ -92,12 +92,12 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
 void shut_down (int status);
 void show_counter (long int game_count);
 void start_up (void);
-void store_hash (int alpha, int depth, int score, int flag, move_s move, int ply, d_long cur_pos);
+void store_hash (int depth, int score, int flag, move_s move, int ply, d_long cur_pos);
 move_s think (const int white_to_move, const int white_castled, const int black_castled, const int wking_loc, const int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, const long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]);
 void toggle_bool (bool *var);
 void tree (int depth, int indent, FILE *output, char *disp_b, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]);
 void tree_debug (void);
-void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty, int fifty_move[], int squares[], int ply);
+void unmake (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int board[], int moved[], int pieces[], long *piece_count, int *game_ply, int *fifty, int fifty_move[], int squares[], int ply);
 void u_killers (move_s move, long int score, int ply);
 bool verify_coord (char input[], move_s *move, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]);
 piece_t which_piece (char c);

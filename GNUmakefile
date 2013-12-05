@@ -1,6 +1,6 @@
 CC = gcc
 OPT = -O2
-FLAGS = -Wall
+FLAGS = -Wall -Wextra
 PROF = -pg
 
 # Release Build:

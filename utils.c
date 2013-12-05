@@ -435,7 +435,7 @@ bool is_valid_comp (move_s in_move) {
 }
 
 
-void parse_cmdline (int argc, char *argv[], int *white_to_move, int board[]) {
+void parse_cmdline (int argc, char *argv[]) {
 
   /* parse command line switches */
 
@@ -803,7 +803,7 @@ bool verify_coord (char input[], move_s *move, int white_to_move, int white_cast
               legal = TRUE;
               *move = moves[i];
           }
-          unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply);
+          unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
           ep_square = ep_temp;
           cur_pos = temp_hash;
       }
