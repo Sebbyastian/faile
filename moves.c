@@ -34,7 +34,6 @@ SOFTWARE.
  **************************************************/
 
 #include "faile.h"
-#include "extvars.h"
 #include "protos.h"
 
 bool check_legal (move_s moves[], int m, const int white_to_move, const int wking_loc, const int bking_loc, int board[]) {
