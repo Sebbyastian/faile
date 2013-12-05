@@ -49,7 +49,7 @@ extern move_s pv[PV_BUFF][PV_BUFF], dummy, killer1[PV_BUFF], killer2[PV_BUFF],
 
 extern rtime_t start_time;
 
-extern d_long h_values[14][144], ep_h_values[144], wck_h_values[2], wcq_h_values[2], bck_h_values[2], bcq_h_values[2], color_h_values[2];
+extern d_long h_values[14][144], ep_h_values[144], color_h_values[2];
 
 extern hash_s *hash_table;
 

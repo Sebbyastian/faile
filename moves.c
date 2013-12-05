@@ -417,7 +417,7 @@ bool is_attacked (int square, int color, int board[]) {
 }
 
 
-void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty, int fifty_move[], int squares[], int ply, d_long *cur_pos) {
+void make (move_s moves[], int i, int *white_to_move, int *white_castled, int *black_castled, int *wking_loc, int *bking_loc, int *ep_square, int board[], int moved[], int pieces[], long *piece_count, d_long rep_history[], int *game_ply, int *fifty, int fifty_move[], int squares[], int ply, d_long *cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[]) {
 
   /* make a move */
 

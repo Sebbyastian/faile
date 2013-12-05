@@ -117,7 +117,7 @@ void b_shut_down (int status) {
 }
 
 
-move_s book_move (int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos) {
+move_s book_move (int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[]) {
 
   /* select a move from the book.  Try to favour the move that occurs the
      most, but also add some randomness to it so that we don't play the same
@@ -154,7 +154,7 @@ move_s book_move (int white_to_move, int white_castled, int black_castled, int w
 
   /* loop through the moves: */
   for (i = 0; i < num_moves; i++) {
-    make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos);
+    make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values);
     assert (cur_pos.x1 == compute_hash (board, moved).x1 &&
 	    cur_pos.x2 == compute_hash (board, moved).x2);
     ply++;
@@ -197,7 +197,7 @@ move_s book_move (int white_to_move, int white_castled, int black_castled, int w
 
   /* make sure our book move is legal in the current position: */
   comp_to_coord (move, str_move);
-  if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos)) {
+  if (verify_coord (str_move, &ign_me, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values)) {
     return (move);
   }
   else {
@@ -349,16 +349,16 @@ void make_book (char *file_name, int max_ply) {
   int white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board[144], moved[144], pieces[33], num_pieces, game_ply, fifty, fifty_move[PV_BUFF], squares[144], ply = 0;
   bool captures;
   long piece_count;
-  d_long rep_history[PV_BUFF], cur_pos;
+  d_long rep_history[PV_BUFF], cur_pos, wck_h_values[2], wcq_h_values[2], bck_h_values[2], bcq_h_values[2];
 
   if ((pgn_in = fopen (file_name, "r")) == NULL) {
     fprintf (stderr, "Couldn't open file %s!\n", file_name);
     shut_down (EXIT_FAILURE);
   }
 
-  init_hash_values ();
+  init_hash_values (wck_h_values, wcq_h_values, bck_h_values, bcq_h_values);
   init_b_hash_tables ();
-  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty, squares, &cur_pos);
+  init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty, squares, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values);
 
   printf ("\nMaking a new book from input file %s.\n", file_name);
   printf ("(Max book ply of %d)\n", max_ply);
@@ -386,7 +386,7 @@ void make_book (char *file_name, int max_ply) {
 	fscanf (pgn_in, "%*[^\n]");
 	book_state = s_comment;
 	show_counter (++game_count);
-	init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty, squares, &cur_pos);
+	init_game (&white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, &captures, board, moved, pieces, &num_pieces, &piece_count, rep_history, &game_ply, &fifty, squares, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values);
 	legal = TRUE;
       }
     }
@@ -406,10 +406,10 @@ void make_book (char *file_name, int max_ply) {
     if (book_state == s_moves) {
       if (possible_move (input)) {
 	if (legal) {
-	  if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos))) {
+	  if (is_valid_comp (pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values))) {
 	    /* we have a legal move: */
-	    move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos);
-	    make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos);
+	    move = pgn_to_comp (input, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values);
+	    make (&move, 0, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values);
 	    reset_piece_square (board, pieces, &num_pieces, squares);
 	    /* add to our book if it's less than max_ply: */
 	    if (game_ply <= max_ply) {
@@ -627,7 +627,7 @@ bool possible_move (char *input) {
 }
 
 
-move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos) {
+move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[]) {
 
   /* try to translate a "reasonable" PGN/SAN move into Faile's internal
      move format.  The algorithm for this function is based upon the
@@ -908,7 +908,7 @@ move_s pgn_to_comp (const char *input, int white_to_move, int white_castled, int
       if (legal) {
 	temp_hash = cur_pos;
 	ep_temp = ep_square;
-	make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos);
+	make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values);
 	ply++;
 	if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
 	  ret_move = moves[i];
