@@ -36,6 +36,7 @@
 #include "faile.h"
 #include "extvars.h"
 #include "protos.h"
+#include <omp.h>
 
 
 void order_moves (move_s moves[], long int move_ordering[], int num_moves, move_s *h_move, int board[], int ply) {
@@ -141,7 +142,7 @@ heuristics: */
 }
 
 
-void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]) {
+void perft_ser (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]) {
 
     move_s moves[MOVE_BUFF];
     int num_moves, i, ep_temp;
@@ -164,10 +165,11 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
 
         /* check to see if our move is legal: */
         if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
+#pragma omp atomic
             (*raw_nodes)++;
             /* go deeper into the tree recursively, increasing the indent to
                create the "tree" effect: */
-            perft (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
+            perft_ser (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
         }
 
         /* unmake the move to go onto the next: */
@@ -175,7 +177,76 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
         cur_pos = temp_hash;
         ep_square = ep_temp;
     }
+}
 
+
+void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board2[], int moved2[], int pieces2[], const int num_pieces, long piece_count, d_long rep_history2[], int game_ply, int fifty, int fifty_move2[], int squares2[], int ply, d_long cur_pos, d_long wck_h_values2[], d_long wcq_h_values2[], d_long bck_h_values2[], d_long bcq_h_values2[], d_long h_values2[][144], d_long ep_h_values2[], d_long color_h_values2[]) {
+    //printf("perft\n");
+
+    move_s moves[MOVE_BUFF];
+    int num_moves, i, ep_temp;
+    d_long temp_hash = cur_pos;
+
+    ep_temp = ep_square;
+    num_moves = 0;
+
+    /* return if we are at the maximum depth: */
+    if (!depth) {
+        return;
+    }
+
+    int board[144];
+    memcpy(board, board2, 144 * sizeof board[0]);
+    int moved[144];
+    memcpy(moved, moved2, 144 * sizeof moved[0]);
+    int pieces[33];
+    memcpy(pieces, pieces2, 33 * sizeof pieces[0]);
+    int squares[144];
+    memcpy(squares, squares2, 144 * sizeof squares[0]);
+    d_long h_values[14][144];
+    memcpy(h_values, h_values2, 14 * 144 * sizeof h_values[0][0]);
+    d_long ep_h_values[144];
+    memcpy(ep_h_values, ep_h_values2, 144 * sizeof ep_h_values[0]);
+    d_long rep_history[PV_BUFF];
+    memcpy(rep_history, rep_history2, PV_BUFF * sizeof rep_history[0]);
+    int fifty_move[PV_BUFF];
+    memcpy(fifty_move, fifty_move2, PV_BUFF * sizeof fifty_move[0]);
+    d_long wck_h_values[2];
+    d_long wcq_h_values[2];
+    d_long bck_h_values[2];
+    d_long bcq_h_values[2];
+    memcpy(wck_h_values, wck_h_values2, 2 * sizeof wck_h_values[0]);
+    memcpy(wcq_h_values, wcq_h_values2, 2 * sizeof wcq_h_values[0]);
+    memcpy(bck_h_values, bck_h_values2, 2 * sizeof bck_h_values[0]);
+    memcpy(bcq_h_values, bcq_h_values2, 2 * sizeof bcq_h_values[0]);
+    d_long color_h_values[2];
+    memcpy(color_h_values, color_h_values2, 2 * sizeof color_h_values[0]);
+
+    /* generate the move list: */
+    gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board, moved, pieces, num_pieces);
+    //printf("%d\n", num_moves);
+
+    /* loop through the moves at the current depth: */
+#pragma omp parallel for private(i) firstprivate(moves, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board, moved, pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values)
+    for (i = 0; i < num_moves; i++) {
+        #pragma omp critical
+        //printf("%p %p %p\n", board, &white_to_move, squares);
+        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
+
+        /* check to see if our move is legal: */
+        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
+#pragma omp atomic
+            (*raw_nodes)++;
+            /* go deeper into the tree recursively, increasing the indent to
+               create the "tree" effect: */
+            perft_ser (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
+        }
+
+        /* unmake the move to go onto the next: */
+        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
+        cur_pos = temp_hash;
+        ep_square = ep_temp;
+    }
 }
 
 
@@ -501,8 +572,10 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
 
     /* store our hash info: */
     if (alpha > i_alpha)
+#pragma omp critical
         store_hash (depth, alpha, exact, pv[ply][ply], ply, cur_pos);
     else
+#pragma omp critical
         store_hash (depth, alpha, u_bound, dummy, ply, cur_pos);
 
     return alpha;
@@ -510,15 +583,42 @@ long int search (int alpha, int beta, int depth, bool do_null, int white_to_move
 }
 
 
-move_s search_root (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]) {
+move_s search_root (int alpha, int beta, int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, int board2[], int moved2[], int pieces2[], const int num_pieces, long piece_count, d_long rep_history2[], int game_ply, int fifty, int fifty_move2[], int squares2[], int ply, d_long cur_pos, d_long wck_h_values2[], d_long wcq_h_values2[], d_long bck_h_values2[], d_long bcq_h_values2[], d_long h_values2[][144], d_long ep_h_values2[], d_long color_h_values2[]) {
 
     /* search the root node using alpha-beta with negamax search */
 
     move_s moves[MOVE_BUFF], best_move = dummy, h_move;
-    int num_moves, i, j, ep_temp, extensions = 0, h_type;
+    int num_moves, i, j, ep_temp, extensions = 0, h_type, k;
     long root_score = -INF, move_ordering[MOVE_BUFF], start_piece_count;
-    bool no_moves, legal_move;
+    bool no_moves, legal_move, flag = TRUE, local_flag;
     d_long temp_hash;
+
+    int board[144];
+    memcpy(board, board2, 144 * sizeof board[0]);
+    int moved[144];
+    memcpy(moved, moved2, 144 * sizeof moved[0]);
+    int pieces[33];
+    memcpy(pieces, pieces2, 33 * sizeof pieces[0]);
+    int squares[144];
+    memcpy(squares, squares2, 144 * sizeof squares[0]);
+    d_long h_values[14][144];
+    memcpy(h_values, h_values2, 14 * 144 * sizeof h_values[0][0]);
+    d_long ep_h_values[144];
+    memcpy(ep_h_values, ep_h_values2, 144 * sizeof ep_h_values[0]);
+    d_long rep_history[PV_BUFF];
+    memcpy(rep_history, rep_history2, PV_BUFF * sizeof rep_history[0]);
+    int fifty_move[PV_BUFF];
+    memcpy(fifty_move, fifty_move2, PV_BUFF * sizeof fifty_move[0]);
+    d_long wck_h_values[2];
+    d_long wcq_h_values[2];
+    d_long bck_h_values[2];
+    d_long bcq_h_values[2];
+    memcpy(wck_h_values, wck_h_values2, 2 * sizeof wck_h_values[0]);
+    memcpy(wcq_h_values, wcq_h_values2, 2 * sizeof wcq_h_values[0]);
+    memcpy(bck_h_values, bck_h_values2, 2 * sizeof bck_h_values[0]);
+    memcpy(bcq_h_values, bcq_h_values2, 2 * sizeof bcq_h_values[0]);
+    d_long color_h_values[2];
+    memcpy(color_h_values, color_h_values2, 2 * sizeof color_h_values[0]);
 
     ply = 1;
 
@@ -554,67 +654,91 @@ move_s search_root (int alpha, int beta, int depth, int white_to_move, int white
     order_moves (&moves[0], &move_ordering[0], num_moves, &h_move, board, ply);
 
     /* loop through the moves at the root: */
-    while (remove_one (&i, &move_ordering[0], num_moves)) {
-        make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
-        assert (cur_pos.x1 == compute_hash (board, moved).x1 && cur_pos.x2 == compute_hash (board, moved).x2);
-        ply++;
-        legal_move = FALSE;
+#pragma omp parallel for schedule(dynamic, 1) private(i, k, local_flag, legal_move) firstprivate(white_to_move, white_castled, black_castled, wking_loc, bking_loc, fifty, fifty_move, squares, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values, ply, ep_square, board, moved, pieces, piece_count, rep_history, game_ply, moves)
+    for (k = 0; k < num_moves; ++k)
+    {
+#pragma omp critical
+        local_flag = flag;
 
-        /* go deeper if it's a legal move: */
-        if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
-            nodes++;
-            root_score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, start_piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
+        if (local_flag)
+        {
+#pragma omp critical
+            remove_one (&i, &move_ordering[0], num_moves);
 
-            /* check to see if we've aborted this search before we found a move: */
-            if (time_exit && no_moves)
-                time_failure = TRUE;
+            make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
+            //assert (cur_pos.x1 == compute_hash (board, moved).x1 && cur_pos.x2 == compute_hash (board, moved).x2);
+            ply++;
+            legal_move = FALSE;
 
-            no_moves = FALSE;
-            legal_move = TRUE;
-        }
+            /* go deeper if it's a legal move: */
+            if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
+                nodes++;
+                root_score = -search (-beta, -alpha, depth-1+extensions, TRUE, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, board, moved, pieces, num_pieces, piece_count, start_piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
 
-        ply--;
-        unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
-        ep_square = ep_temp;
-        cur_pos = temp_hash;
+                /* check to see if we've aborted this search before we found a move: */
+#pragma omp critical
+                if (time_exit && no_moves)
+                    time_failure = TRUE;
 
-        /* if we've run out of time, return the best we have so far: */
-        if (time_exit)
-            return best_move;
+#pragma omp critical
+                no_moves = FALSE;
 
-        /* check our current score vs. alpha: */
-        if (root_score > alpha && legal_move) {
-
-            u_killers (moves[i], root_score, ply);
-
-            /* update the history heuristic since we have a cutoff: */
-            history_h[moves[i].from][moves[i].target] += depth;
-
-            alpha = root_score;
-            best_move = moves[i];
-            cur_score = alpha;
-
-            /* see if our root score has dropped a lot: */
-            if ((cur_score+40) < last_root_score) {
-                bad_root_score = TRUE;
+                legal_move = TRUE;
             }
 
-            /* update the hash tables: */
-            store_hash (depth, alpha, exact, best_move, ply, cur_pos);
-
-            /* update the pv: */
-            pv[ply][ply] = moves[i];
-            for (j = ply+1; j < pv_length[ply+1]; j++)
-                pv[ply][j] = pv[ply+1][j];
-            pv_length[ply] = pv_length[ply+1];
-
-            /* print out thinking information: */
-            if (post && i_depth >= mindepth) {
-                post_thinking (alpha);
-            }
+            ply--;
+            unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
+            ep_square = ep_temp;
+            cur_pos = temp_hash;
         }
 
+            /* if we've run out of time, return the best we have so far: */
+#pragma omp critical
+        if (time_exit) {
+            flag = FALSE;
+            local_flag = flag;
+        }
+
+        if (local_flag)
+        {
+
+            /* check our current score vs. alpha: */
+#pragma omp critical
+            if (root_score > alpha && legal_move) {
+
+                u_killers (moves[i], root_score, ply);
+
+                /* update the history heuristic since we have a cutoff: */
+                history_h[moves[i].from][moves[i].target] += depth;
+
+                alpha = root_score;
+                best_move = moves[i];
+                cur_score = alpha;
+
+                /* see if our root score has dropped a lot: */
+                if ((cur_score+40) < last_root_score) {
+                    bad_root_score = TRUE;
+                }
+
+                /* update the hash tables: */
+                store_hash (depth, alpha, exact, best_move, ply, cur_pos);
+
+                /* update the pv: */
+                pv[ply][ply] = moves[i];
+                for (j = ply+1; j < pv_length[ply+1]; j++)
+                    pv[ply][j] = pv[ply+1][j];
+                pv_length[ply] = pv_length[ply+1];
+
+                /* print out thinking information: */
+                if (post && i_depth >= mindepth) {
+                    post_thinking (alpha);
+                }
+            }
+        }
     }
+
+    if (time_exit)
+        return best_move;
 
     /* check to see if we are mated / stalemated: */
     if (no_moves) {

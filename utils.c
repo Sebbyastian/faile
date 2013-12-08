@@ -712,7 +712,7 @@ void start_up (void) {
   /* things to do on start up of the program */
 
   printf ("Faile version 1.4\nby Adrien Regimbald\n\n\n");
-  rdelay (2);
+  //rdelay (2);
 
 }
 

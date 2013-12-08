@@ -34,6 +34,7 @@
 
 #include "faile.h"
 #include "protos.h"
+#include <omp.h>
 
 char divider[50] = "-------------------------------------------------";
 move_s dummy = {0,0,0,0,0,0,0};
