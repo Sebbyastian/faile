@@ -165,7 +165,6 @@ void perft_ser (int depth, int white_to_move, int white_castled, int black_castl
 
         /* check to see if our move is legal: */
         if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
-#pragma omp atomic
             (*raw_nodes)++;
             /* go deeper into the tree recursively, increasing the indent to
                create the "tree" effect: */
@@ -186,6 +185,7 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
     move_s moves[MOVE_BUFF];
     int num_moves, i, ep_temp;
     d_long temp_hash = cur_pos;
+    long int sump = 0;
 
     ep_temp = ep_square;
     num_moves = 0;
@@ -227,21 +227,22 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
     //printf("%d\n", num_moves);
 
     /* loop through the moves at the current depth: */
-#pragma omp parallel for private(i) firstprivate(moves, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board, moved, pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values)
+#pragma omp parallel for private(i, sump) firstprivate(moves, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, board, moved, pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values)
     for (i = 0; i < num_moves; i++) {
-        #pragma omp critical
+        sump = 0;
         //printf("%p %p %p\n", board, &white_to_move, squares);
         make (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, &ep_square, board, moved, pieces, &piece_count, rep_history, &game_ply, &fifty, fifty_move, squares, ply, &cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
 
         /* check to see if our move is legal: */
         if (check_legal (&moves[0], i, white_to_move, wking_loc, bking_loc, board)) {
-#pragma omp atomic
-            (*raw_nodes)++;
+            sump++;
             /* go deeper into the tree recursively, increasing the indent to
                create the "tree" effect: */
-            perft_ser (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
+            perft_ser (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, &sump, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
         }
 
+#pragma omp critical
+        *raw_nodes += sump;
         /* unmake the move to go onto the next: */
         unmake (&moves[0], i, &white_to_move, &white_castled, &black_castled, &wking_loc, &bking_loc, board, moved, pieces, &piece_count, &game_ply, &fifty, fifty_move, squares, ply);
         cur_pos = temp_hash;
