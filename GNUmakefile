@@ -9,7 +9,7 @@ objects = faile.o utils.o moves.o search.o eval.o hash.o rand.o book.o
 headers = extvars.h faile.h protos.h
 
 faile:	$(objects)
-	$(CC) -o faile $(objects) -lm
+	$(CC) -o faile $(objects) -lm -pthread
 
 eval.o:	eval.c $(headers)
 	$(CC) $(OPT) $(FLAGS) -c -o eval.o eval.c

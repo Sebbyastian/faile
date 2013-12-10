@@ -37,6 +37,46 @@
 #include "extvars.h"
 #include "protos.h"
 
+#include <pthread.h>
+
+struct perft_arg
+{
+    int start;
+    int end;
+    int num_moves;
+
+    int depth;
+    move_s moves[MOVE_BUFF];
+    int white_to_move;
+    int white_castled;
+    int black_castled;
+    int wking_loc;
+    int bking_loc;
+    int ep_square;
+    bool captures;
+    long int raw_nodes;
+    int board[144];
+    int moved[144];
+    int pieces[33];
+    int num_pieces;
+    long piece_count;
+    d_long rep_history[PV_BUFF];
+    int game_ply;
+    int fifty;
+    int fifty_move[PV_BUFF];
+    int squares[144];
+    int ply;
+    d_long cur_pos;
+    d_long wck_h_values[2];
+    d_long wcq_h_values[2];
+    d_long bck_h_values[2];
+    d_long bcq_h_values[2];
+    d_long h_values[14][144];
+    d_long ep_h_values[144];
+    d_long color_h_values[2];
+};
+
+pthread_t threads[32];
 
 void order_moves (move_s moves[], long int move_ordering[], int num_moves, move_s *h_move, int board[], int ply) {
 
@@ -140,8 +180,7 @@ heuristics: */
 
 }
 
-
-void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]) {
+void perft_ser2 (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]) {
 
     move_s moves[MOVE_BUFF];
     int num_moves, i, ep_temp;
@@ -167,7 +206,7 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
             (*raw_nodes)++;
             /* go deeper into the tree recursively, increasing the indent to
                create the "tree" effect: */
-            perft (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
+            perft_ser2 (depth-1, white_to_move, white_castled, black_castled, wking_loc, bking_loc, ep_square, captures, raw_nodes, board, moved, pieces, num_pieces, piece_count, rep_history, game_ply, fifty, fifty_move, squares, ply, cur_pos, wck_h_values, wcq_h_values, bck_h_values, bcq_h_values, h_values, ep_h_values, color_h_values);
         }
 
         /* unmake the move to go onto the next: */
@@ -175,7 +214,124 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
         cur_pos = temp_hash;
         ep_square = ep_temp;
     }
+}
 
+void *pthread_perft(void *arg)
+{
+    struct perft_arg *pa = arg;
+    int i, ep_temp;
+    d_long temp_hash;
+    if (!arg)
+        return NULL;
+
+    ep_temp = pa->ep_square;
+    temp_hash = pa->cur_pos;
+
+    /* loop through the moves at the current depth: */
+    for (i = pa->start; i < pa->end; ++i) {
+        make (pa->moves, i, &pa->white_to_move, &pa->white_castled, &pa->black_castled, &pa->wking_loc, &pa->bking_loc, &pa->ep_square, pa->board, pa->moved, pa->pieces, &pa->piece_count,
+              pa->rep_history, &pa->game_ply, &pa->fifty, pa->fifty_move, pa->squares, pa->ply, &pa->cur_pos, pa->wck_h_values, pa->wcq_h_values, pa->bck_h_values, pa->bcq_h_values, pa->h_values, pa->ep_h_values, pa->color_h_values);
+
+        /* check to see if our move is legal: */
+        if (check_legal (pa->moves, i, pa->white_to_move, pa->wking_loc, pa->bking_loc, pa->board)) {
+            pa->raw_nodes++;
+            /* go deeper into the tree recursively, increasing the indent to
+               create the "tree" effect: */
+            perft_ser2 (pa->depth-1, pa->white_to_move, pa->white_castled, pa->black_castled, pa->wking_loc, pa->bking_loc, pa->ep_square, pa->captures,
+                        &pa->raw_nodes, pa->board, pa->moved, pa->pieces, pa->num_pieces, pa->piece_count, pa->rep_history, pa->game_ply, pa->fifty, pa->fifty_move,
+                        pa->squares, pa->ply, pa->cur_pos, pa->wck_h_values, pa->wcq_h_values, pa->bck_h_values, pa->bcq_h_values, pa->h_values, pa->ep_h_values, pa->color_h_values);
+        }
+
+        /* unmake the move to go onto the next: */
+        unmake (pa->moves, i, &pa->white_to_move, &pa->white_castled, &pa->black_castled, &pa->wking_loc, &pa->bking_loc,
+                pa->board, pa->moved, pa->pieces, &pa->piece_count, &pa->game_ply, &pa->fifty, pa->fifty_move, pa->squares, pa->ply);
+        pa->cur_pos = temp_hash;
+        pa->ep_square = ep_temp;
+    }
+
+    return (void *)pa->raw_nodes;
+}
+
+void perft (int depth, int white_to_move, int white_castled, int black_castled, int wking_loc, int bking_loc, int ep_square, const bool captures, long int *raw_nodes, int board[], int moved[], int pieces[], const int num_pieces, long piece_count, d_long rep_history[], int game_ply, int fifty, int fifty_move[], int squares[], int ply, d_long cur_pos, d_long wck_h_values[], d_long wcq_h_values[], d_long bck_h_values[], d_long bcq_h_values[], d_long h_values[][144], d_long ep_h_values[], d_long color_h_values[]) {
+
+    move_s moves[MOVE_BUFF];
+    int num_moves, i;
+    char *num_threads_s = getenv("FAILE_NUM_THREADS");
+    int num_threads, count;
+    struct perft_arg *args;
+
+    num_moves = 0;
+
+    /* return if we are at the maximum depth: */
+    if (!depth) {
+        return;
+    }
+
+    num_threads = num_threads_s ? strtol(num_threads_s, NULL, 10) : 2;
+    if (!num_threads)
+        num_threads = 2;
+
+    printf("%d\n", num_threads);
+
+    args = calloc(num_threads, sizeof *args);
+
+    /* generate the move list: */
+    gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board, moved, pieces, num_pieces);
+
+    count = num_moves / num_threads;
+
+    for (i = 0; i < num_threads; ++i) {
+        struct perft_arg *arg = &args[i];
+
+        arg->depth = depth;
+        arg->white_to_move = white_to_move;
+        arg->white_castled = white_castled;
+        arg->black_castled = black_castled;
+        arg->wking_loc = wking_loc;
+        arg->bking_loc = bking_loc;
+        arg->ep_square = ep_square;
+        arg->captures = captures;
+        arg->raw_nodes = 0;
+        arg->num_pieces = num_pieces;
+        arg->piece_count = piece_count;
+        arg->game_ply = game_ply;
+        arg->fifty = fifty;
+        arg->ply = ply;
+        arg->cur_pos = cur_pos;
+
+        arg->start = i * count;
+        arg->end = arg->start + count;
+        if (arg->end > num_moves)
+            arg->end = num_moves;
+
+        memcpy(arg->board, board, sizeof arg->board);
+        memcpy(arg->moves, moves, sizeof arg->moves);
+        memcpy(arg->moved, moved, sizeof arg->moved);
+        memcpy(arg->pieces, pieces, sizeof arg->pieces);
+        memcpy(arg->rep_history, rep_history, sizeof arg->rep_history);
+        memcpy(arg->fifty_move, fifty_move, sizeof arg->fifty_move);
+        memcpy(arg->squares, squares, sizeof arg->squares);
+        memcpy(arg->wck_h_values, wck_h_values, sizeof arg->wck_h_values);
+        memcpy(arg->wcq_h_values, wcq_h_values, sizeof arg->wcq_h_values);
+        memcpy(arg->bck_h_values, bck_h_values, sizeof arg->bck_h_values);
+        memcpy(arg->bcq_h_values, bcq_h_values, sizeof arg->bcq_h_values);
+        memcpy(arg->h_values, h_values, sizeof arg->h_values);
+        memcpy(arg->ep_h_values, ep_h_values, sizeof arg->ep_h_values);
+        memcpy(arg->color_h_values, color_h_values, sizeof arg->color_h_values);
+    }
+
+    for (i = 0; i < num_threads; ++i) {
+        struct perft_arg *arg = &args[i];
+        pthread_create(&threads[i], NULL, pthread_perft, arg);
+    }
+
+    for (i = 0; i < num_threads; ++i) {
+        void *ret;
+        pthread_join(threads[i], &ret);
+        *raw_nodes += (unsigned long)ret;
+    }
+
+    free(args);
 }
 
 
