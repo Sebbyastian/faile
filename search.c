@@ -257,7 +257,7 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
     move_s moves[MOVE_BUFF];
     int num_moves, i;
     char *num_threads_s = getenv("FAILE_NUM_THREADS");
-    int num_threads, count;
+    int num_threads, count, rem;
     struct perft_arg *args;
 
     num_moves = 0;
@@ -279,6 +279,7 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
     gen (&moves[0], &num_moves, white_to_move, ep_square, captures, board, moved, pieces, num_pieces);
 
     count = num_moves / num_threads;
+    rem = num_moves % num_threads;
 
     for (i = 0; i < num_threads; ++i) {
         struct perft_arg *arg = &args[i];
@@ -299,10 +300,15 @@ void perft (int depth, int white_to_move, int white_castled, int black_castled, 
         arg->ply = ply;
         arg->cur_pos = cur_pos;
 
-        arg->start = i * count;
-        arg->end = arg->start + count;
-        if (arg->end > num_moves)
-            arg->end = num_moves;
+        if (i < rem) {
+            arg->start = i * (count + 1);
+            arg->end = arg->start + count + 1;
+        } else {
+            arg->start = i * count + rem;
+            arg->end = arg->start + count;
+            if (arg->end > num_moves)
+                arg->end = num_moves;
+        }
 
         memcpy(arg->board, board, sizeof arg->board);
         memcpy(arg->moves, moves, sizeof arg->moves);
