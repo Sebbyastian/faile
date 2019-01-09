@@ -233,12 +233,12 @@ void init_b_hash_tables (void) {
 
   // I'll also leave you to test this...
 # ifdef ALTERNATIVE
-# define MB UL << 19
+# define MB * (1UL << 19)
   unsigned long my_max_hash = (32 MB) / b_element_size;
-  while (my_max_hash & -~my_max_hash) // why is this a MUCH better loop, daddeh?
+  while (my_max_hash & -~my_max_hash) // why is this a better loop?
     my_max_hash |= my_max_hash >> i++;
   my_max_hash++;
-  assert(b_max_hash == my_max_hash);
+  assert(b_max_hash == my_max_hash); 
 # endif  
 
   /* allocate our book hash table's memory, and report on the allocation: */
