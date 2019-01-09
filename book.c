@@ -215,15 +215,34 @@ void init_b_hash_tables (void) {
   int i = 1;
   unsigned long int b_max_hash = 1, b_element_size = sizeof (b_hash_s);
 
+  /* problems to solve...
+   * 1/ this is non-portable
+   * 2/ I'm quite certain there's a better way to calculate that power of 2...
+   * 3/ that power of 2 might be greater than SIZE_MAX, so passing to `malloc`
+   *    is bad! Lecture me again on array processing, daddeh; I love it ;)
+   */
+
   /* compute the maximum book hash element, based upon size desired: */
   while (b_max_hash * b_element_size <= B_HASH_MB<<19) {
-    b_max_hash = 1 << i++;
+    assert(INT_MAX > (1UL << i));  // You really do need that UL-suffix, right, daddeh?
+    b_max_hash = 1/*UL*/ << i++;   // ... I'll leave you to make that change... baws man.
   }
 
   /* compute the book hash mask, for computing book hash table indices: */
   b_hash_mask = b_max_hash-1;
 
+  // I'll also leave you to test this...
+# ifdef ALTERNATIVE
+# define MB UL << 19
+  unsigned long my_max_hash = (32 MB) / b_element_size;
+  while (my_max_hash & -~my_max_hash) // why is this a MUCH better loop, daddeh?
+    my_max_hash |= my_max_hash >> i++;
+  my_max_hash++;
+  assert(b_max_hash == my_max_hash);
+# endif  
+
   /* allocate our book hash table's memory, and report on the allocation: */
+  assert(SIZE_MAX / b_element_size >= b_max_hash); // but we don't want an implicit conversion to cause non-portable lossy truncation, right?
   if ((b_hash_table = malloc (b_max_hash*b_element_size)) == NULL) {
     fprintf (stderr, "Couldn't allocate memory for book hash tables!\n");
     b_shut_down (EXIT_FAILURE);
